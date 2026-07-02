@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Control de Activos — RJJ09</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a56db;--blue-light:#eff6ff;--blue-mid:#2563eb;
+  --teal:#0d9488;--teal-light:#f0fdfa;
+  --amber:#d97706;--amber-light:#fffbeb;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#16a34a;--green-light:#f0fdf4;
+  --gray:#374151;--gray-light:#f9fafb;--gray-mid:#6b7280;--border:#e5e7eb;
+  --white:#fff;--radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;color:var(--gray);min-height:100vh}
+/* HEADER */
+.header{background:var(--blue);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-logo{font-weight:700;font-size:16px;letter-spacing:.3px}
+.header-logo span{opacity:.7;font-weight:400;font-size:13px;margin-left:8px}
+.header-actions{display:flex;gap:8px}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-white{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-white:hover{background:rgba(255,255,255,.25)}
+.btn-primary{background:var(--blue-mid);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:#0f766e}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--gray);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--gray-light)}
+/* MAIN LAYOUT */
+.container{max-width:1400px;margin:0 auto;padding:20px 16px}
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 56px)}
+.login-card{background:var(--white);border-radius:12px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.login-card h2{font-size:22px;font-weight:700;color:var(--blue);margin-bottom:6px}
+.login-card p{color:var(--gray-mid);font-size:13px;margin-bottom:28px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,
+.form-group select,
+.form-group textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--gray);transition:border .15s;background:var(--white)}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+.form-group textarea{resize:vertical;min-height:80px}
+.login-users{margin-top:20px;font-size:12px;color:var(--gray-mid);background:var(--gray-light);padding:12px;border-radius:6px;line-height:1.8}
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border-left:3px solid var(--blue)}
+.stat-card.teal{border-left-color:var(--teal)}
+.stat-card.amber{border-left-color:var(--amber)}
+.stat-card.green{border-left-color:var(--green)}
+.stat-num{font-size:26px;font-weight:700;color:var(--gray);line-height:1}
+.stat-label{font-size:11px;color:var(--gray-mid);margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+/* TOOLBAR */
+.toolbar{background:var(--white);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow)}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap input{padding-left:34px;width:100%}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-mid);font-size:16px}
+.toolbar select{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--gray);background:var(--white);cursor:pointer}
+/* TABLE */
+.table-wrap{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.table-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.table-header span{font-size:13px;color:var(--gray-mid)}
+table{width:100%;border-collapse:collapse}
+thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid #f3f4f6;transition:background .1s}
+tbody tr:hover{background:#f8fafc}
+tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
+.inv-badge{font-family:monospace;font-size:11px;background:var(--blue-light);color:var(--blue);padding:2px 6px;border-radius:4px;white-space:nowrap}
+.desc-cell{max-width:280px}
+.desc-text{font-size:13px;font-weight:500;display:block}
+.desc-sub{font-size:11px;color:var(--gray-mid);margin-top:1px}
+.resguard-name{font-weight:500;font-size:12px}
+.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--white);z-index:1}
+.modal-head h3{font-size:17px;font-weight:700;color:var(--gray)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px}
+.close-btn{background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:22px;line-height:1;padding:2px}
+.close-btn:hover{color:var(--gray)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+/* ASSET DETAIL VIEW */
+.asset-detail-header{display:flex;gap:20px;align-items:flex-start;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.asset-qr-box{flex-shrink:0;text-align:center}
+.asset-qr-box .qr-label{font-size:10px;color:var(--gray-mid);margin-top:6px}
+.asset-detail-info h2{font-size:18px;font-weight:700;color:var(--gray);margin-bottom:6px}
+.asset-detail-info .inv-num{font-family:monospace;font-size:12px;color:var(--blue);background:var(--blue-light);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:8px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-item label{font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.4px;font-weight:600;display:block;margin-bottom:2px}
+.detail-item span{font-size:14px;color:var(--gray);font-weight:500}
+/* QR PRINT VIEW */
+#printView{display:none}
+.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.qr-card{border:1.5px solid #ccc;border-radius:8px;padding:14px;text-align:center;page-break-inside:avoid}
+.qr-card .qr-codigo{font-size:10px;font-family:monospace;color:#555;margin-bottom:4px;word-break:break-all}
+.qr-card .qr-desc{font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3}
+.qr-card .qr-inv{font-size:8px;color:#888;margin-top:2px;font-family:monospace}
+@media print{
+  body *{visibility:hidden}
+  #printView,#printView *{visibility:visible}
+  #printView{display:block!important;position:fixed;inset:0;background:#fff;overflow:visible}
+  .qr-grid{gap:8px}
+  .qr-card{padding:8px}
+}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+/* ROLE BADGE */
+.role-badge{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.role-admin{background:#fce7f3;color:#be185d}
+.role-editor{background:#dbeafe;color:#1d4ed8}
+.role-consulta{background:#d1fae5;color:#065f46}
+/* SCAN VIEW */
+.scan-card{background:var(--white);border-radius:12px;max-width:480px;margin:40px auto;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.scan-field{margin-bottom:16px}
+.scan-field label{font-size:11px;font-weight:600;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.scan-field .val{font-size:15px;font-weight:500;color:var(--gray)}
+.scan-field .val.mono{font-family:monospace;font-size:13px;color:var(--blue)}
+/* TABS */
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:8px 18px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--gray-mid);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.tab-btn:hover:not(.active){color:var(--gray)}
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;align-items:center;gap:6px;padding:14px;border-top:1px solid var(--border)}
+.page-btn{padding:5px 10px;border:1px solid var(--border);border-radius:5px;background:var(--white);cursor:pointer;font-size:13px;transition:all .15s}
+.page-btn:hover{background:var(--blue-light);border-color:var(--blue)}
+.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-info{font-size:13px;color:var(--gray-mid);margin:0 6px}
+/* RESPONSIVE */
+@media(max-width:768px){
+  .grid-2,.grid-3,.detail-grid{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  table{font-size:12px}
+  thead th:nth-child(3),thead th:nth-child(4),thead th:nth-child(5){display:none}
+  tbody td:nth-child(3),tbody td:nth-child(4),tbody td:nth-child(5){display:none}
+  .asset-detail-header{flex-direction:column}
+  .toolbar{gap:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">
+    📦 Control de Activos <span>RJJ09 — Inventario Institucional</span>
+  </div>
+  <div id="headerRight" style="display:flex;align-items:center;gap:10px">
+    <span id="userDisplay" style="font-size:12px;opacity:.8"></span>
+    <span id="roleBadgeHeader"></span>
+    <button class="btn btn-white btn-sm" onclick="logout()" id="logoutBtn" style="display:none">Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>Iniciar sesión</h2>
+    <p>Sistema de control de activos con códigos QR</p>
+    <div class="form-group">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="admin / editor / consulta" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px" onclick="doLogin()">Entrar</button>
+    <div class="login-users">
+      <strong>Usuarios de prueba:</strong><br>
+      admin / admin123 — Administrador<br>
+      editor / edit123 — Editor<br>
+      consulta / ver123 — Consulta
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="container">
+    <!-- TABS -->
+    <div class="tabs" id="mainTabs">
+      <button class="tab-btn active" onclick="showTab('inventario')">📋 Inventario</button>
+      <button class="tab-btn" onclick="showTab('por-resguardatario')">👤 Por resguardatario</button>
+      <button class="tab-btn" onclick="showTab('qr-codes')" id="tabQR">🔲 Códigos QR</button>
+    </div>
+
+    <!-- INVENTARIO TAB -->
+    <div id="tab-inventario">
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">304</div>
+          <div class="stat-label">Total bienes</div>
+        </div>
+        <div class="stat-card teal">
+          <div class="stat-num" id="statResguardatarios">0</div>
+          <div class="stat-label">Resguardatarios</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-num" id="statFiltrados">304</div>
+          <div class="stat-label">Mostrando</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-num" id="statValor">$0</div>
+          <div class="stat-label">Valor total</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar por descripción, inventario, serie, resguardatario..." oninput="applyFilters()">
+        </div>
+        <select id="filterResguard" onchange="applyFilters()">
+          <option value="">Todos los resguardatarios</option>
+        </select>
+        <button class="btn btn-teal" onclick="exportExcel()">📊 Excel</button>
+        <button class="btn btn-primary" onclick="exportPDF()">📄 PDF</button>
+        <button class="btn" style="background:#7c3aed;color:#fff" onclick="exportHTML()" title="Descarga el index.html actualizado para subir a Netlify">💾 Exportar HTML</button>
+        <button class="btn btn-white btn-sm" style="background:var(--blue-light);color:var(--blue);border:none" onclick="openAddModal()" id="addBtnMain">➕ Nuevo bien</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <strong style="font-size:14px;color:var(--gray)">Bienes activos</strong>
+          <span id="pageInfo2">Página 1</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Descripción</th>
+                <th>No. inventario</th>
+                <th>Serie</th>
+                <th>Resguardatario</th>
+                <th>Marca / Modelo</th>
+                <th style="text-align:right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="assetsTable"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+    <!-- POR RESGUARDATARIO TAB -->
+    <div id="tab-por-resguardatario" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchResguard" placeholder="Buscar resguardatario..." oninput="renderResguardatarios()">
+        </div>
+      </div>
+      <div id="resguardatarioList"></div>
+    </div>
+
+    <!-- QR CODES TAB -->
+    <div id="tab-qr-codes" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchQR" placeholder="Buscar bien para QR..." oninput="renderQRGrid()">
+        </div>
+        <select id="filterResguardQR" onchange="renderQRGrid()">
+          <option value="">Todos los resguardatarios</option>
+        </select>
+        <button class="btn btn-primary" onclick="printAllQR()">🖨️ Imprimir todos los QR</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <strong style="font-size:14px">Vista previa de códigos QR</strong>
+          <span id="qrCount">304 códigos</span>
+        </div>
+        <div style="padding:20px">
+          <div id="qrGridContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN VIEW (URL: ?scan=INVENTARIO) -->
+<div id="scanView" style="display:none">
+  <div class="container">
+    <div class="scan-card">
+      <div id="scanContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Nuevo bien</h3>
+      <button class="close-btn" onclick="closeModal('addModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Número de inventario *</label>
+          <input type="text" id="f_inventario" placeholder="RJJ09I...">
+        </div>
+        <div class="form-group">
+          <label>N° de bien</label>
+          <input type="text" id="f_numero" placeholder="00001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descripción *</label>
+        <input type="text" id="f_descripcion" placeholder="Nombre del bien">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Código resguardatario</label>
+          <input type="text" id="f_codResguard" placeholder="7100001">
+        </div>
+        <div class="form-group">
+          <label>Nombre resguardatario</label>
+          <input type="text" id="f_nombreResguard" placeholder="Nombre completo">
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" id="f_marca" placeholder="HP">
+        </div>
+        <div class="form-group">
+          <label>Modelo</label>
+          <input type="text" id="f_modelo" placeholder="LaserJet">
+        </div>
+        <div class="form-group">
+          <label>N° de serie</label>
+          <input type="text" id="f_serie" placeholder="SN001">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Empleado responsable</label>
+          <input type="text" id="f_empleado" placeholder="7100001">
+        </div>
+        <div class="form-group">
+          <label>Valor de adquisición</label>
+          <input type="number" id="f_valor" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAsset()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Ficha del bien</h3>
+      <button class="close-btn" onclick="closeModal('detailModal')">×</button>
+    </div>
+    <div class="modal-body" id="detailContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('detailModal')">Cerrar</button>
+      <button class="btn btn-primary" onclick="editCurrentAsset()" id="editFromDetail">✏️ Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PRINT VIEW -->
+<div id="printView">
+  <h2 style="text-align:center;margin-bottom:16px;font-family:sans-serif;font-size:16px">Códigos QR — Inventario de Activos RJJ09</h2>
+  <div class="qr-grid" id="printQRGrid"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const USERS = {
+  admin:   {pass:'admin123', role:'admin',   name:'Administrador'},
+  editor:  {pass:'edit123',  role:'editor',  name:'Editor'},
+  consulta:{pass:'ver123',   role:'consulta',name:'Consulta'}
+};
+
+let currentUser = null;
+let currentRole = null;
+let editingId   = null;
+let currentPage = 1;
+const PAGE_SIZE  = 25;
+let filteredData = [];
+
+// Raw assets from xlsx
+let ASSETS = [{"id":5,"numero":"00572","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300572","codResguardatario":"7101223","nombreResguardatario":"ALICIA RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":6,"numero":"00573","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300573","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":7,"numero":"00639","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300639","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":8,"numero":"00780","descripcion":"VENTILADOR DE TORRE, CON CONTROL","inventario":"RJJ09I4504000521300780","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BC-1500","serie":"SN"},{"id":9,"numero":"01494","descripcion":"IMPRESORA","inventario":"RJJ09I1800000341601494","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"HP","modelo":"COLOR LASER JET PRO MFP M476DW","serie":"CNB7G7K8Z5"},{"id":10,"numero":"01564","descripcion":"LIBRERO DE MADERA 3 ENTREPAÑOS","inventario":"RJJ09I4504001701301564","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":11,"numero":"01587","descripcion":"LIBRERO DE MADERA 0.80x0.40x1.80","inventario":"RJJ09I4504001701301587","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":12,"numero":"01650","descripcion":"LIBRERO DE MADERA, 3 ENTREPAÑOS, CON 2 PUERTAS","inventario":"RJJ09I4504001701301650","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"SM","serie":"SN"},{"id":13,"numero":"01745","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301745","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":14,"numero":"01746","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301746","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":15,"numero":"01748","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301748","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":16,"numero":"01911","descripcion":"MESA AUXILIAR DE MADERA","inventario":"RJJ09I4504002321301911","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"PRYAMO","modelo":"LP-215","serie":"SN"},{"id":17,"numero":"01922","descripcion":"MESA DE JUNTAS DE MADERA CIRCULAR DE 1.10x0.75","inventario":"RJJ09I4504002441301922","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":18,"numero":"02057","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402057","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DVZ7"},{"id":19,"numero":"02071","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402071","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DVZW"},{"id":20,"numero":"02223","descripcion":"MODULO DESARMABLE","inventario":"RJJ09I4504002581302223","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"QUALIUM","serie":"SN"},{"id":21,"numero":"02266","descripcion":"MODULO DESARMABLE SEMIEJE DE MADERA 1.90x0.75","inventario":"RJJ09I4504002581302266","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":22,"numero":"02495","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302495","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"OCH","modelo":"SM","serie":"SN"},{"id":23,"numero":"02513","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302513","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":24,"numero":"02857","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302857","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"PM STEELE","modelo":"SM","serie":"SN"},{"id":25,"numero":"02932","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302932","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"TURCHIA","serie":"SN"},{"id":26,"numero":"02936","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302936","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"TURCHIA","serie":"SN"},{"id":27,"numero":"02970","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302970","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"2010","serie":"SN"},{"id":28,"numero":"02972","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302972","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"2010","serie":"SN"},{"id":29,"numero":"02977","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302977","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"2010","serie":"SN"},{"id":30,"numero":"03206","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303206","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":31,"numero":"03268","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303268","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":32,"numero":"03440","descripcion":"VENTILADOR DE PEDESTAL","inventario":"RJJ09I4504003461303440","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"UB-16P","serie":"SN"},{"id":33,"numero":"03581","descripcion":"VIDEOPROYECTOR","inventario":"RJJ09I1502005241603581","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"SONY","modelo":"VPL-EX242","serie":"5007028"},{"id":34,"numero":"03972","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903972","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":35,"numero":"03973","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903973","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":36,"numero":"03974","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903974","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":37,"numero":"04283","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904283","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":38,"numero":"04284","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904284","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":39,"numero":"04464","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904464","codResguardatario":"7101223","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":40,"numero":"03969","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903969","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":41,"numero":"03970","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903970","codResguardatario":"7101099","nombreResguardatario":"ALICIA   RODRÍGUEZ HERNANDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":42,"numero":"02415","descripcion":"ARCHIVERO DE MADERA CON 2 GAVETAS 0.40x0.60x0.58","inventario":"RJJ09I4504000141302415","codResguardatario":"7101071","nombreResguardatario":"AMBAR GIOVANNA  ALMAZAN DEGANTE","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"OCH","modelo":"SM","serie":"SN"},{"id":43,"numero":"02530","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302530","codResguardatario":"7101071","nombreResguardatario":"AMBAR GIOVANNA  ALMAZAN DEGANTE","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":44,"numero":"03472","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303472","codResguardatario":"7101071","nombreResguardatario":"AMBAR GIOVANNA  ALMAZAN DEGANTE","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BT-40","serie":"SN"},{"id":45,"numero":"03971","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903971","codResguardatario":"7101071","nombreResguardatario":"AMBAR GIOVANNA  ALMAZAN DEGANTE","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":46,"numero":"04279","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904279","codResguardatario":"7101071","nombreResguardatario":"AMBAR GIOVANNA  ALMAZAN DEGANTE","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":47,"numero":"02528","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302528","codResguardatario":"7100870","nombreResguardatario":"ANALLELY  HERNANDEZ GONZALEZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":48,"numero":"03428","descripcion":"DISCO DURO EXTERNO 2 TB","inventario":"RJJ09I1800001401603428","codResguardatario":"7100870","nombreResguardatario":"ANALLELY  HERNANDEZ GONZALEZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ADATA","modelo":"SM","serie":"1E3720041856"},{"id":49,"numero":"03856","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903856","codResguardatario":"7100870","nombreResguardatario":"ANALLELY  HERNANDEZ GONZALEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":50,"numero":"04285","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904285","codResguardatario":"7100870","nombreResguardatario":"ANALLELY  HERNANDEZ GONZALEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":51,"numero":"00582","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300582","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":52,"numero":"01177","descripcion":"EQUIPO MULTIFUNCIONAL","inventario":"RJJ09I1800001961401177","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"HP","modelo":"M475DW","serie":"CNB8D15VR3"},{"id":53,"numero":"01545","descripcion":"JUEGO DE SALA, SILLONES DE 1, 2 Y 3 PLAZAS.","inventario":"RJJ09I4506001521301545","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"ZOR 1, ZOR 2 Y ZOR 3","serie":"SN"},{"id":54,"numero":"01572","descripcion":"LIBRERO DE MADERA 3 ENTREPAÑOS","inventario":"RJJ09I4504001701301572","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":55,"numero":"01924","descripcion":"MESA DE JUNTAS DE MADERA CIRCULAR DE 1.10x0.75","inventario":"RJJ09I4504002441301924","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO17","serie":"SN"},{"id":56,"numero":"02086","descripcion":"COMPUTADORA DE ESCRITORIO C6","inventario":"RJJ09I1800002201402086","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DVZQ"},{"id":57,"numero":"02105","descripcion":"COMPUTADORA DE ESCRITORIO C4","inventario":"RJJ09I1800002201402105","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DW11"},{"id":58,"numero":"02214","descripcion":"MODULO DESARMABLE EJECUTIVO, 1.90x0.75x0.75","inventario":"RJJ09I4504002581302214","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":59,"numero":"02385","descripcion":"NO BREAK","inventario":"RJJ09I1800001481602385","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"CYBERPOWER","modelo":"BRG1350AVRLCD","serie":"BG4DU2001316"},{"id":60,"numero":"02469","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302469","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"B17R","serie":"SN"},{"id":61,"numero":"02571","descripcion":"PIZARRON DE CORCHO 60x120 CMS.","inventario":"RJJ09I4504002781602571","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ABC","modelo":"SM","serie":"SN"},{"id":62,"numero":"02782","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302782","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":63,"numero":"02790","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302790","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":64,"numero":"02804","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302791","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7101053","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":65,"numero":"02941","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302941","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"TURCHIA","serie":"SN"},{"id":66,"numero":"03429","descripcion":"DISCO DURO EXTERNO 2 TB","inventario":"RJJ09I1800001401603429","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ADATA","modelo":"SM","serie":"1E3720041832"},{"id":67,"numero":"03430","descripcion":"UNIDAD LECTORA DE DISCO COMPACTO EXTERNO","inventario":"RJJ09I1800001401603430","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LG","modelo":"GP50NB40","serie":"408HVFW124667"},{"id":68,"numero":"03516","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303516","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LASKO","modelo":"2519","serie":"SN"},{"id":69,"numero":"03985","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903985","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":70,"numero":"03986","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903986","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":71,"numero":"04071","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60 G6","inventario":"RJJ09I4504002581904071","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":72,"numero":"04072","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60 G4","inventario":"RJJ09I4504002581904072","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":73,"numero":"04073","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60 G2","inventario":"RJJ09I4504002581904073","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":74,"numero":"04291","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904291","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":75,"numero":"04300","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904300","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":76,"numero":"04301","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO G6","inventario":"RJJ09I4504003201904301","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":77,"numero":"04314","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO G4","inventario":"RJJ09I4504003201904314","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":78,"numero":"04425","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO G2","inventario":"RJJ09I4504003201904425","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":79,"numero":"04426","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904426","codResguardatario":"7100644","nombreResguardatario":"ARAM  RODRIGUEZ DE LOS SANTOS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":80,"numero":"03859","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903826","codResguardatario":"7100001","nombreResguardatario":"BRENDA BRENDA  ISLAS  ONOFRE","empleadoResponsable":"7101076","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":81,"numero":"04286","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904287","codResguardatario":"7100001","nombreResguardatario":"BRENDA BRENDA  ISLAS  ONOFRE","empleadoResponsable":"7101076","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":82,"numero":"00125","descripcion":"ARCHIVERO DE MADERA 2 GAVETAS","inventario":"RJJ09I4504000081300125","codResguardatario":"000000","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"0000000","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"QCAM2C","serie":"SN"},{"id":83,"numero":"00608","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300608","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":84,"numero":"01918","descripcion":"MESA DE JUNTAS DE MADERA","inventario":"RJJ09I4504002441301918","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":85,"numero":"02020","descripcion":"MESA DE MADERA PARA JUNTAS OVALADA 2.40x1.10x0.75","inventario":"RJJ09I4504002281302020","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7101082","almacen":"400","valorAdquisicion":0,"marca":"PM STEELE","modelo":"1010712240JE","serie":"SN"},{"id":86,"numero":"02497","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302497","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"OCH","modelo":"SM","serie":"SN"},{"id":87,"numero":"02713","descripcion":"SILLA FIJA DE MADERA","inventario":"RJJ09I4504003141302713","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":88,"numero":"02714","descripcion":"SILLA FIJA DE MADERA","inventario":"RJJ09I4504003141302714","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":89,"numero":"02715","descripcion":"SILLA FIJA DE MADERA","inventario":"RJJ09I4504003141302715","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":90,"numero":"02716","descripcion":"SILLA FIJA DE MADERA","inventario":"RJJ09I4504003141302716","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":91,"numero":"02717","descripcion":"SILLA FIJA DE MADERA","inventario":"RJJ09I4504003141302717","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":92,"numero":"02718","descripcion":"SILLA FIJA DE MADERA","inventario":"RJJ09I4504003141302718","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":93,"numero":"02918","descripcion":"SILLON TIPO TRINEO","inventario":"RJJ09I4504003141302918","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":94,"numero":"02919","descripcion":"SILLON TIPO TRINEO","inventario":"RJJ09I4504003141302919","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":95,"numero":"03694","descripcion":"MESA ESQUINERA DE MADERA","inventario":"RJJ09I4504002541803694","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":600,"marca":"SM","modelo":"SM","serie":"SN"},{"id":96,"numero":"03816","descripcion":"JUEGO DE SALA","inventario":"RJJ09I4506001521803816","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":3150,"marca":"SM","modelo":"SM","serie":"SN"},{"id":97,"numero":"04427","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904427","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":98,"numero":"04551","descripcion":"MULTIFUNCIONAL","inventario":"RJJ09I1800001962204551","codResguardatario":"7101165","nombreResguardatario":"CELIA  ELIZABETH  PIGUERON","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"BROTHER","modelo":"MFC9130CW","serie":"U63479H4J447647"},{"id":99,"numero":"00496","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300496","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":100,"numero":"01273","descripcion":"ESCRITORIO DE MADERA PEDESTAL","inventario":"RJJ09I4504001221301273","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"PRYAMO","modelo":"LP-203","serie":"SN"},{"id":101,"numero":"01571","descripcion":"LIBRERO DE MADERA 3 ENTREPAÑOS","inventario":"RJJ09I4504001701301571","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":102,"numero":"01631","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS Y SOPORTE","inventario":"RJJ09I4504001701301631","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"80130","serie":"SN"},{"id":103,"numero":"02470","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302470","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"B17R","serie":"SN"},{"id":104,"numero":"02503","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302503","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"OCH","modelo":"SM","serie":"SN"},{"id":105,"numero":"02678","descripcion":"ROTAFOLIO 0.90x0.70","inventario":"RJJ09I4504003481302678","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"ESCO","modelo":"SM","serie":"SN"},{"id":106,"numero":"03000","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141303000","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"2010","serie":"SN"},{"id":107,"numero":"03246","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303246","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":108,"numero":"03512","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303512","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"LASKO","modelo":"2519","serie":"SN"},{"id":109,"numero":"03527","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303527","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"7100985","almacen":"400","valorAdquisicion":0,"marca":"LASKO","modelo":"2519","serie":"SN"},{"id":110,"numero":"03865","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903865","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":111,"numero":"04320","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904320","codResguardatario":"7100985","nombreResguardatario":"CRUZ ARCELIA  TANORI VILLA","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":112,"numero":"03862","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903862","codResguardatario":"7100644","nombreResguardatario":"EDUARDO RODRIGUEZ GARAGARZA","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":113,"numero":"04306","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904306","codResguardatario":"7100644","nombreResguardatario":"EDUARDO RODRIGUEZ GARAGARZA","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":114,"numero":"00522","descripcion":"ARCHIVERO DE MADERA 3 GAVETAS","inventario":"RJJ09I4504000141300522","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":115,"numero":"01516","descripcion":"IMPRESORA","inventario":"RJJ09I1800000341401516","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"HP","modelo":"LASERJET CM1415FN","serie":"CNH8C900D7"},{"id":116,"numero":"01633","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS Y SOPORTE","inventario":"RJJ09I4504001701301633","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"80130","serie":"SN"},{"id":117,"numero":"02007","descripcion":"MESA DE TRABAJO DE METAL PARA COMPUTADORA","inventario":"RJJ09I4504002521302007","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"P.M.STEELE","modelo":"SM","serie":"SN"},{"id":118,"numero":"02033","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402033","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DVZU"},{"id":119,"numero":"02063","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402063","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DW0K"},{"id":120,"numero":"02184","descripcion":"MODULO DESARMABLE","inventario":"RJJ09I4504002581302184","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":121,"numero":"02280","descripcion":"MONITOR LED 24 PLG","inventario":"RJJ09C8700000701402280","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"LG","modelo":"E2441VWIDE","serie":"201NDUN8E534"},{"id":122,"numero":"02770","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302770","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10D","serie":"SN"},{"id":123,"numero":"03209","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303209","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":124,"numero":"03216","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303216","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":125,"numero":"03427","descripcion":"DISCO DURO EXTERNO 2 TB","inventario":"RJJ09I1800001401603427","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ADATA","modelo":"SM","serie":"1E3720041826"},{"id":126,"numero":"03433","descripcion":"UNIDAD LECTORA DE DISCO COMPACTO EXTERNO","inventario":"RJJ09I1800001401303433","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"LG","modelo":"GSA-5163B","serie":"501ZYVH019135"},{"id":127,"numero":"03455","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303455","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BT-40","serie":"SN"},{"id":128,"numero":"03983","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903983","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":129,"numero":"03984","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903984","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":130,"numero":"04298","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904298","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":131,"numero":"04299","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904299","codResguardatario":"7100783","nombreResguardatario":"FANNY  LOPEZ DIAZ","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":132,"numero":"01238","descripcion":"ESCRITORIO DE MADERA AUXILIAR","inventario":"RJJ09I4504001221301238","codResguardatario":"7101181","nombreResguardatario":"GEMMA ABISAY  ORTIZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO6","serie":"SN"},{"id":133,"numero":"01661","descripcion":"LIBRERO DE MADERA, 3 ENTREPAÑOS, CON 2 PUERTAS","inventario":"RJJ09I4504001701301661","codResguardatario":"7101181","nombreResguardatario":"GEMMA ABISAY  ORTIZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":134,"numero":"02466","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302466","codResguardatario":"7101181","nombreResguardatario":"GEMMA ABISAY  ORTIZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"B17R","serie":"SN"},{"id":135,"numero":"02921","descripcion":"SILLON TIPO TRINEO","inventario":"RJJ09I4504003141302921","codResguardatario":"7101181","nombreResguardatario":"GEMMA ABISAY  ORTIZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":136,"numero":"03260","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303260","codResguardatario":"7101181","nombreResguardatario":"GEMMA ABISAY  ORTIZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":137,"numero":"03470","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303470","codResguardatario":"7101181","nombreResguardatario":"GEMMA ABISAY  ORTIZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BT-40","serie":"SN"},{"id":138,"numero":"00571","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300571","codResguardatario":"7100285","nombreResguardatario":"JESSICA MIRNA  QUIJANO MONTERRUBIO","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":139,"numero":"01569","descripcion":"LIBRERO DE MADERA 3 ENTREPAÑOS","inventario":"RJJ09I4504001701301569","codResguardatario":"7100285","nombreResguardatario":"JESSICA MIRNA  QUIJANO MONTERRUBIO","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":140,"numero":"03993","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903993","codResguardatario":"7100285","nombreResguardatario":"JESSICA MIRNA  QUIJANO MONTERRUBIO","empleadoResponsable":"","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":141,"numero":"04311","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904311","codResguardatario":"7100285","nombreResguardatario":"JESSICA MIRNA  QUIJANO MONTERRUBIO","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":142,"numero":"04296","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904296","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":143,"numero":"01203","descripcion":"EQUIPO PARA VIDEO CONFERENCIA","inventario":"RJJ09I1504000861601203","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"LOGITECH","modelo":"CONFERENCE GROUP","serie":"1635LZ08AD28"},{"id":144,"numero":"01240","descripcion":"ESCRITORIO DE MADERA COLOR CAOBA","inventario":"RJJ09I4504001221301240","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"EN-LAT","serie":"SN"},{"id":145,"numero":"01595","descripcion":"LIBRERO DE MADERA 1.20x0.40x1.80","inventario":"RJJ09I4504001701301595","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":146,"numero":"02042","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402042","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7101123","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DVZ5"},{"id":147,"numero":"02087","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402087","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DVZV"},{"id":148,"numero":"02468","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302468","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"B17R","serie":"SN"},{"id":149,"numero":"03013","descripcion":"SILLA DE METAL 5 RODAJAS","inventario":"RJJ09I4504003141303013","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"SM","serie":"SN"},{"id":150,"numero":"03045","descripcion":"SILLA DE METAL 5 RODAJAS","inventario":"RJJ09I4504003141303045","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ATON","modelo":"SM","serie":"SN"},{"id":151,"numero":"03451","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303451","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BT-40","serie":"SN"},{"id":152,"numero":"03827","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.50 X 1.50","inventario":"RJJ09I4504002581903827","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"","almacen":"400","valorAdquisicion":5400,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":153,"numero":"03857","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903857","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7101076","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":154,"numero":"03975","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903975","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":155,"numero":"03976","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903976","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":156,"numero":"03982","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903982","codResguardatario":"7101202","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":157,"numero":"03977","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903977","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":158,"numero":"04289","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904289","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":159,"numero":"04292","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904292","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":160,"numero":"04293","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904293","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":161,"numero":"04310","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904310","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":162,"numero":"04313","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904313","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":163,"numero":"04530","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904530","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":164,"numero":"00529","descripcion":"ARCHIVERO DE MADERA 3 GAVETAS","inventario":"RJJ09I4504000141300529","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":165,"numero":"01749","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301749","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":166,"numero":"02248","descripcion":"MODULO DESARMABLE","inventario":"RJJ09I4504002581302248","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":167,"numero":"02527","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302527","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":168,"numero":"02570","descripcion":"PIZARRON DE CORCHO 60x120 CMS.","inventario":"RJJ09I4504002781602570","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ABC","modelo":"SM","serie":"SN"},{"id":169,"numero":"02572","descripcion":"ROTAFOLIO PORTATIL","inventario":"RJJ09I4504003481302572","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":170,"numero":"02871","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302871","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"DISPLAN","modelo":"SM","serie":"SN"},{"id":171,"numero":"02874","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302874","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7101076","almacen":"400","valorAdquisicion":0,"marca":"DISPLAN","modelo":"SM","serie":"SN"},{"id":172,"numero":"04290","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904290","codResguardatario":"7101201","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":173,"numero":"03980","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903980","codResguardatario":"7101189","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":174,"numero":"04288","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904288","codResguardatario":"7101189","nombreResguardatario":"JIMENA  DESCHAMPS LOMELI","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":175,"numero":"02531","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302531","codResguardatario":"7101203","nombreResguardatario":"JORGE  DAVID MARTINEZ","empleadoResponsable":"7101157","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":176,"numero":"03854","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903854","codResguardatario":"7101203","nombreResguardatario":"JORGE  DAVID MARTINEZ","empleadoResponsable":"7101157","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":177,"numero":"04281","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904281","codResguardatario":"7101203","nombreResguardatario":"JORGE  DAVID MARTINEZ","empleadoResponsable":"7101157","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":178,"numero":"03996","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903996","codResguardatario":"7101218","nombreResguardatario":"JUAN  DAVID  TORRES","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":179,"numero":"04316","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904316","codResguardatario":"7101218","nombreResguardatario":"JUAN  DAVID  TORRES","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":180,"numero":"03448","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303448","codResguardatario":"7101024","nombreResguardatario":"KARLA JOCELIN  GODOY RAMIREZ","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BT-40","serie":"SN"},{"id":181,"numero":"03969","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903857","codResguardatario":"7101024","nombreResguardatario":"KARLA JOCELIN  GODOY RAMIREZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":182,"numero":"04277","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904292","codResguardatario":"7101024","nombreResguardatario":"KARLA JOCELIN  GODOY RAMIREZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":183,"numero":"00220","descripcion":"GPS","inventario":"RJJ09I2100001121300220","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"GARMIN","modelo":"GPS MAP 76 CSX","serie":"1QF024877"},{"id":184,"numero":"00221","descripcion":"GPS","inventario":"RJJ09I2100001121300221","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"GARMIN","modelo":"GPS MAP 76 CSX","serie":"1QF052426"},{"id":185,"numero":"00222","descripcion":"GPS","inventario":"RJJ09I2100001121300222","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"GARMIN","modelo":"GPS MAP 76 CSX","serie":"1QF055399"},{"id":186,"numero":"00224","descripcion":"GPS","inventario":"RJJ09I2100001121300224","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"GARMIN","modelo":"GPS MAP 76 CSX","serie":"1QF040633"},{"id":187,"numero":"00577","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300577","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":188,"numero":"00678","descripcion":"ARCHIVERO DE METAL 3 GAVETAS, COLOR NEGRO","inventario":"RJJ09I4504000161300678","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"MANUFACTURAS POST-FORM","modelo":"SM","serie":"SN"},{"id":189,"numero":"00679","descripcion":"ARCHIVERO DE METAL 3 GAVETAS, COLOR NEGRO","inventario":"RJJ09I4504000161300679","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"MANUFACTURAS POST-FORM","modelo":"SM","serie":"SN"},{"id":190,"numero":"00770","descripcion":"BRUJULA","inventario":"RJJ09I0606000521300770","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"BRUNTON","modelo":"SM","serie":"SN"},{"id":191,"numero":"01253","descripcion":"ESCRITORIO DE MADERA COLOR CAOBA","inventario":"RJJ09I4504001221301253","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":192,"numero":"01612","descripcion":"LIBRERO DE MADERA CON 2 PUERTAS","inventario":"RJJ09I4504001701301612","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"SM","serie":"SN"},{"id":193,"numero":"02378","descripcion":"NIVEL TOPOGRAFICO","inventario":"RJJ09I0606006381302378","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ROSSBACH","modelo":"SM","serie":"SN"},{"id":194,"numero":"02413","descripcion":"ARCHIVERO DE METAL CON 2 GAVETAS","inventario":"RJJ09I4504000161302413","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"PROLAR","modelo":"SM","serie":"SN"},{"id":195,"numero":"02515","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302515","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":196,"numero":"03219","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303219","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":197,"numero":"03275","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303275","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":198,"numero":"03540","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303540","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":0,"marca":"LASKO","modelo":"2519","serie":"SN"},{"id":199,"numero":"04282","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904282","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":200,"numero":"04557","descripcion":"CAMARA FOTOGRAFICA","inventario":"RJJ09I1502005282204557","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"PENTAX","modelo":"K 3 II","serie":"6284857"},{"id":201,"numero":"04558","descripcion":"TRIPIE PARA CAMARA FOTOGRAFICA","inventario":"RJJ09I1502003822204558","codResguardatario":"7100397","nombreResguardatario":"LEONEL  ALVAREZ BALDERAS","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"MANFROTTO","modelo":"SM","serie":"W0024281"},{"id":202,"numero":"00102","descripcion":"ANAQUEL METALICO","inventario":"RJJ09I4504000081300102","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":203,"numero":"00126","descripcion":"ANAQUEL METALICO","inventario":"RJJ09I4504000081300126","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":204,"numero":"00532","descripcion":"ARCHIVERO DE MADERA 3 GAVETAS","inventario":"RJJ09I4504000141300532","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":205,"numero":"00568","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300568","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":206,"numero":"01033","descripcion":"CINTA TOPOGRAFICA DE 50 METROS","inventario":"RJJ09I0606000801301033","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"STILONREEL","modelo":"SM","serie":"SN"},{"id":207,"numero":"01038","descripcion":"GUILLOTINA MANUAL","inventario":"RJJ09I4504000861301038","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"PROLAR","modelo":"SM","serie":"SN"},{"id":208,"numero":"01060","descripcion":"CREDENZA DE MADERA","inventario":"RJJ09I4504000921301060","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":209,"numero":"01158","descripcion":"ENFRIADOR Y CALENTADOR DE AGUA","inventario":"RJJ09I4504001081301158","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"KRYSTEL","modelo":"EC-001","serie":"2216"},{"id":210,"numero":"01222","descripcion":"ESCRITORIO DE MADERA 1.20x0.75x0.75 COLOR CAOBA","inventario":"RJJ09I4504001221301222","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"PRYAMO","modelo":"LP-201","serie":"SN"},{"id":211,"numero":"01226","descripcion":"ESCRITORIO DE MADERA 1.50x0.75x0.75","inventario":"RJJ09I4504001221301226","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":212,"numero":"01303","descripcion":"ANAQUEL METALICO 7 ENTREPAÑOS, TAMAÑO OFICIO","inventario":"RJJ09I4504000081301303","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"MANUFACTURAS POST-FORM","modelo":"SM","serie":"SN"},{"id":213,"numero":"01399","descripcion":"GABINETE UNIVERSAL DE METAL","inventario":"RJJ09I4504001461301399","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROCA","modelo":"SM","serie":"SN"},{"id":214,"numero":"01400","descripcion":"GABINETE UNIVERSAL DE METAL","inventario":"RJJ09I4504001461301400","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROCA","modelo":"SM","serie":"SN"},{"id":215,"numero":"01401","descripcion":"GABINETE UNIVERSAL DE METAL","inventario":"RJJ09I4504001461301401","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROCA","modelo":"SM","serie":"SN"},{"id":216,"numero":"01415","descripcion":"GABINETE UNIVERSAL DE METAL","inventario":"RJJ09I4504001461301415","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":217,"numero":"01747","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301747","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":218,"numero":"01757","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301757","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":219,"numero":"02419","descripcion":"ARCHIVERO DE MADERA CON 2 GAVETAS","inventario":"RJJ09I4504000141302419","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"OCH","modelo":"SM","serie":"SN"},{"id":220,"numero":"02569","descripcion":"PIZARRON DE CORCHO 60x120 CMS.","inventario":"RJJ09I4504002781602569","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ABC","modelo":"SM","serie":"SN"},{"id":221,"numero":"02807","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302807","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":222,"numero":"02881","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302881","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"DISPLAN","modelo":"SM","serie":"SN"},{"id":223,"numero":"02925","descripcion":"SILLON TIPO TRINEO","inventario":"RJJ09I4504003141302925","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":224,"numero":"03232","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303232","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100783","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":225,"numero":"03262","descripcion":"SILLON EJECUTIVO, 5 RODAJAS","inventario":"RJJ09I4504003201303262","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"MESH 2 RB","serie":"SN"},{"id":226,"numero":"03292","descripcion":"SILLON FIJO","inventario":"RJJ09I4504003201303292","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"PRYAMO","modelo":"SEI-18","serie":"SN"},{"id":227,"numero":"03382","descripcion":"TELEVISION PANTALLA LED 50","inventario":"RJJ09I1502003641403382","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"HISENSE","modelo":"50K610GW","serie":"50G133835H01528"},{"id":228,"numero":"03415","descripcion":"TRIPIE CAMARA CINE DE VIDEO","inventario":"RJJ09I1502003821303415","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"DIGITAL","modelo":"TR-60N","serie":"SN"},{"id":229,"numero":"03501","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303501","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BTC-135","serie":"SN"},{"id":230,"numero":"03686","descripcion":"MESA DE CENTRO DE MADERA","inventario":"RJJ09I4504002381803686","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"","almacen":"400","valorAdquisicion":960,"marca":"SM","modelo":"SM","serie":"SN"},{"id":231,"numero":"03812","descripcion":"SOFA 3 PLAZAS","inventario":"RJJ09I4504003241803812","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":3150,"marca":"SM","modelo":"SM","serie":"SN"},{"id":232,"numero":"04075","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581904075","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":233,"numero":"04076","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581904076","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":234,"numero":"04077","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581904077","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":235,"numero":"04429","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904429","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":236,"numero":"04430","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904430","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":237,"numero":"04431","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904431","codResguardatario":"7100012","nombreResguardatario":"MANUEL  VALENCIA DELGADO","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":238,"numero":"03826","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903860","codResguardatario":"7100895","nombreResguardatario":"MARGARITA  NAVA SANCHEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":239,"numero":"04287","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904308","codResguardatario":"7100895","nombreResguardatario":"MARGARITA  NAVA SANCHEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":240,"numero":"00569","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300569","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":241,"numero":"00631","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300631","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"7101078","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":242,"numero":"01257","descripcion":"ESCRITORIO DE MADERA EJECUTIVO COLOR CAOBA","inventario":"RJJ09I4504001221301257","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":243,"numero":"01665","descripcion":"LIBRERO DE MADERA, 3 ENTREPAÑOS, CON 2 PUERTAS","inventario":"RJJ09I4504001701301665","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":244,"numero":"01758","descripcion":"LIBRERO DE MADERA, 4 ENTREPAÑOS, 1.20x0.30x1.80","inventario":"RJJ09I4504001701301758","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"NORVID","modelo":"ECO11","serie":"SN"},{"id":245,"numero":"01912","descripcion":"MESA AUXILIAR DE MADERA","inventario":"RJJ09I4504002321301912","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"PRYAMO","modelo":"LP-215","serie":"SN"},{"id":246,"numero":"01929","descripcion":"MESA DE JUNTAS DE MADERA, 120x3 MT CON 10 SILLONES","inventario":"RJJ09I4504002441301929","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":247,"numero":"02421","descripcion":"ARCHIVERO DE MADERA CON 2 GAVETAS","inventario":"RJJ09I4504000141302421","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":248,"numero":"02430","descripcion":"ARCHIVERO DE MADERA CON 2 GAVETAS","inventario":"RJJ09I4504000141302430","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"EN-AR-ESP","serie":"SN"},{"id":249,"numero":"02455","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302455","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":250,"numero":"02568","descripcion":"PIZARRON BLANCO 60x90 CMS.","inventario":"RJJ09I4504002781602568","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ABC","modelo":"SM","serie":"SN"},{"id":251,"numero":"02648","descripcion":"REFRIGERADOR 9 PIES","inventario":"RJJ09I4506002181302648","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"BLUE POINT","modelo":"BPR10090BX","serie":"R49N029M02458"},{"id":252,"numero":"02789","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302789","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":253,"numero":"03424","descripcion":"DISCO DURO EXTERNO 2 TB","inventario":"RJJ09I1800001401603424","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ADATA","modelo":"SM","serie":"1E3720041823"},{"id":254,"numero":"03425","descripcion":"DISCO DURO EXTERNO 2 TB","inventario":"RJJ09I1800001401603425","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ADATA","modelo":"SM","serie":"1E3720041825"},{"id":255,"numero":"03500","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303500","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"BTC-135","serie":"SN"},{"id":256,"numero":"04318","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904318","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"7101053","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":257,"numero":"04552","descripcion":"IMPRESORA","inventario":"RJJ09I1800000342204552","codResguardatario":"7100279","nombreResguardatario":"MARINA  ROMERO CAZARES","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"HP","modelo":"LASERJET PRO","serie":"CNB7H285M7"},{"id":258,"numero":"00570","descripcion":"ARCHIVERO DE MADERA 4 GAVETAS","inventario":"RJJ09I4504000141300570","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"MUEBLES SALAZAR","modelo":"CLASICO","serie":"SN"},{"id":259,"numero":"01568","descripcion":"LIBRERO DE MADERA 3 ENTREPAÑOS","inventario":"RJJ09I4504001701301568","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":260,"numero":"01926","descripcion":"MESA DE JUNTAS DE MADERA DE 1.20x0.75 M","inventario":"RJJ09I4504002441301926","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7101057","almacen":"400","valorAdquisicion":0,"marca":"PONTEVEDRA","modelo":"EN-JUN","serie":"SN"},{"id":261,"numero":"02048","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402048","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DW0R"},{"id":262,"numero":"02049","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402049","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DW0Y"},{"id":263,"numero":"02073","descripcion":"COMPUTADORA DE ESCRITORIO","inventario":"RJJ09I1800002201402073","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LENOVO","modelo":"THINKCENTRE M79 SFF","serie":"MJ01DW01"},{"id":264,"numero":"02210","descripcion":"MODULO DESARMABLE EJECUTIVO, 1.90x0.75x0.75","inventario":"RJJ09I4504002581302210","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"SM","serie":"SN"},{"id":265,"numero":"02526","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302526","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":266,"numero":"02775","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302775","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10DBC","serie":"SN"},{"id":267,"numero":"02776","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302776","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10DBC","serie":"SN"},{"id":268,"numero":"02777","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302777","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10DBC","serie":"SN"},{"id":269,"numero":"02778","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302778","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10DBC","serie":"SN"},{"id":270,"numero":"02835","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302835","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10DBC","serie":"SN"},{"id":271,"numero":"02848","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141302848","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"E10DBC","serie":"SN"},{"id":272,"numero":"03530","descripcion":"VENTILADOR DE TORRE","inventario":"RJJ09I4504003461303530","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7101099","almacen":"400","valorAdquisicion":0,"marca":"LASKO","modelo":"2519","serie":"SN"},{"id":273,"numero":"03855","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903855","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7101157","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":274,"numero":"03978","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903978","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":275,"numero":"03981","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903981","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"","almacen":"","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":276,"numero":"03979","descripcion":"MODULO OPERATIVO INDIVIDUAL RECTO, 1.50 X 0.60","inventario":"RJJ09I4504002581903979","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":277,"numero":"04187","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904187","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":278,"numero":"04278","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904278","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":279,"numero":"04297","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904297","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":280,"numero":"04280","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904280","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7101157","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":281,"numero":"04294","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904294","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":282,"numero":"04295","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904295","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":283,"numero":"04575","descripcion":"IMPRESORA","inventario":"RJJ09I1800000342204575","codResguardatario":"7101189","nombreResguardatario":"MARISELA  RICARDEZ","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"HP","modelo":"LJ PRO M402DNE","serie":"PHB5D03017"},{"id":284,"numero":"02289","descripcion":"MONITOR PANTALLA PLANA 24 PLG","inventario":"RJJ09C8700000701602289","codResguardatario":"7101106","nombreResguardatario":"MAURICIO  SORIANO","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":0,"marca":"LG","modelo":"SM","serie":"ETLU50D01543510DC78536"},{"id":285,"numero":"03970","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903859","codResguardatario":"7101106","nombreResguardatario":"MAURICIO  SORIANO","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":3600,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":286,"numero":"04278","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904286","codResguardatario":"7101106","nombreResguardatario":"MAURICIO  SORIANO","empleadoResponsable":"7101054","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":287,"numero":"02290","descripcion":"MONITOR PANTALLA PLANA 24 PLG","inventario":"RJJ09C8700000701602290","codResguardatario":"7101106","nombreResguardatario":"MAURICIO  SORIANO","empleadoResponsable":"7100644","almacen":"","valorAdquisicion":0,"marca":"ACER","modelo":"SM","serie":""},{"id":288,"numero":"02412","descripcion":"ARCHIVERO DE METAL CON 2 GAVETAS","inventario":"RJJ09I4504000161302412","codResguardatario":"7101202","nombreResguardatario":"MONICA  NOSTI","empleadoResponsable":"7101076","almacen":"400","valorAdquisicion":0,"marca":"PROLAR","modelo":"SM","serie":"SN"},{"id":289,"numero":"02524","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302524","codResguardatario":"7101202","nombreResguardatario":"MONICA  NOSTI","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":290,"numero":"03864","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903864","codResguardatario":"7101202","nombreResguardatario":"MONICA  NOSTI","empleadoResponsable":"","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":291,"numero":"04319","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904319","codResguardatario":"7101202","nombreResguardatario":"MONICA  NOSTI","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":292,"numero":"01565","descripcion":"LIBRERO DE MADERA 3 ENTREPAÑOS","inventario":"RJJ09I4504001701301565","codResguardatario":"7100081","nombreResguardatario":"OFELIA  LOPEZ GRANADOS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ROAL","modelo":"EXCEPTIONAL","serie":"SN"},{"id":293,"numero":"02464","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302464","codResguardatario":"7100081","nombreResguardatario":"OFELIA  LOPEZ GRANADOS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"WOODS","modelo":"B17R","serie":"SN"},{"id":294,"numero":"03106","descripcion":"SILLA FIJA DE METAL","inventario":"RJJ09I4504003141303106","codResguardatario":"7100081","nombreResguardatario":"OFELIA  LOPEZ GRANADOS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"ERGO","modelo":"SM","serie":"SN"},{"id":295,"numero":"03505","descripcion":"VENTILADOR DE PEDESTAL","inventario":"RJJ09I4504003461303505","codResguardatario":"7100081","nombreResguardatario":"OFELIA  LOPEZ GRANADOS","empleadoResponsable":"","almacen":"400","valorAdquisicion":0,"marca":"BIRTMAN","modelo":"UB16P","serie":"SN"},{"id":296,"numero":"03828","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.50 X 1.50","inventario":"RJJ09I4504002581903828","codResguardatario":"7100081","nombreResguardatario":"OFELIA  LOPEZ GRANADOS","empleadoResponsable":"","almacen":"400","valorAdquisicion":5400,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":297,"numero":"04321","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904321","codResguardatario":"7100081","nombreResguardatario":"OFELIA  LOPEZ GRANADOS","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":298,"numero":"02414","descripcion":"ARCHIVERO DE MADERA CON 2 GAVETAS 0.40x0.60x0.58","inventario":"RJJ09I4504000141302414","codResguardatario":"7101101","nombreResguardatario":"OSCAR  VÁZQUEZ SÁNCHEZ","empleadoResponsable":"7100012","almacen":"400","valorAdquisicion":0,"marca":"OCH","modelo":"SM","serie":"SN"},{"id":299,"numero":"03863","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903863","codResguardatario":"7101101","nombreResguardatario":"OSCAR  VÁZQUEZ SÁNCHEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":300,"numero":"04315","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904315","codResguardatario":"7101101","nombreResguardatario":"OSCAR  VÁZQUEZ SÁNCHEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":301,"numero":"03858","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903858","codResguardatario":"7101227","nombreResguardatario":"VICTOR OMAR  MINERO","empleadoResponsable":"7100644","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":302,"numero":"04463","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904463","codResguardatario":"7101227","nombreResguardatario":"VICTOR OMAR  MINERO","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":303,"numero":"04533","descripcion":"MACBOOK LAPTOP","inventario":"RJJ09I8000000122204533","codResguardatario":"7101227","nombreResguardatario":"VICTOR OMAR  MINERO","empleadoResponsable":"7100490","almacen":"400","valorAdquisicion":65699.12,"marca":"APPLE","modelo":"MACBOOK PRO","serie":"C02F630BMD6P"},{"id":304,"numero":"03861","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.80 X 1.95","inventario":"RJJ09I4504002581903861","codResguardatario":"7101221","nombreResguardatario":"XIMENA SARAI  POSADAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":8100,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":305,"numero":"04309","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904309","codResguardatario":"7101221","nombreResguardatario":"XIMENA SARAI  POSADAS","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":306,"numero":"02525","descripcion":"PERCHERO DE METAL","inventario":"RJJ09I4504002681302525","codResguardatario":"7100879","nombreResguardatario":"YOLANDA  RAMIREZ PAEZ","empleadoResponsable":"7101065","almacen":"400","valorAdquisicion":0,"marca":"SM","modelo":"SM","serie":"SN"},{"id":307,"numero":"03825","descripcion":"MODULO SEMIEJECUTIVO EN L, 1.50 X 1.50","inventario":"RJJ09I4504002581903825","codResguardatario":"7100879","nombreResguardatario":"YOLANDA  RAMIREZ PAEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":5400,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"},{"id":308,"numero":"04276","descripcion":"SILLON EJECUTIVO RESPALDO MEDIO","inventario":"RJJ09I4504003201904276","codResguardatario":"7100879","nombreResguardatario":"YOLANDA  RAMIREZ PAEZ","empleadoResponsable":"","almacen":"400","valorAdquisicion":2000,"marca":"VON HAUCKE","modelo":"SM","serie":"SN"}];
+
+// ==================== INIT ====================
+function init(){
+  // Load from localStorage if available
+  const saved = localStorage.getItem('activos_rjj09');
+  if(saved) ASSETS = JSON.parse(saved);
+  
+  // Check scan mode
+  const params = new URLSearchParams(window.location.search);
+  const scanInv = params.get('scan');
+  if(scanInv){
+    showScanView(scanInv);
+    return;
+  }
+  
+  // Populate resguardatario filters
+  const resguards = getUniqueResguardatarios();
+  ['filterResguard','filterResguardQR'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    resguards.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r; opt.text = r;
+      el.appendChild(opt);
+    });
+  });
+  
+  updateStats();
+}
+
+function saveToStorage(){
+  localStorage.setItem('activos_rjj09', JSON.stringify(ASSETS));
+}
+
+function getUniqueResguardatarios(){
+  const names = [...new Set(ASSETS.map(a => a.nombreResguardatario.trim()))].sort();
+  return names.filter(n => n.length > 0);
+}
+
+// ==================== AUTH ====================
+function doLogin(){
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const u = USERS[user];
+  if(!u || u.pass !== pass){
+    showToast('Usuario o contraseña incorrectos', 'error');
+    return;
+  }
+  currentUser = user;
+  currentRole = u.role;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = 'inline-flex';
+  document.getElementById('userDisplay').textContent = u.name;
+  const roleLabels = {admin:'Administrador',editor:'Editor',consulta:'Solo lectura'};
+  const roleColors = {admin:'role-admin',editor:'role-editor',consulta:'role-consulta'};
+  document.getElementById('roleBadgeHeader').innerHTML = `<span class="role-badge ${roleColors[currentRole]}">${roleLabels[currentRole]}</span>`;
+  
+  // Hide edit controls for consulta
+  if(currentRole === 'consulta'){
+    document.getElementById('addBtnMain').style.display = 'none';
+  }
+  
+  applyFilters();
+  renderResguardatarios();
+  updateStats();
+}
+
+function logout(){
+  currentUser = null; currentRole = null;
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// ==================== TABS ====================
+function showTab(tab){
+  ['inventario','por-resguardatario','qr-codes'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active', i === ['inventario','por-resguardatario','qr-codes'].indexOf(tab));
+  });
+  if(tab === 'qr-codes') renderQRGrid();
+  if(tab === 'por-resguardatario') renderResguardatarios();
+}
+
+// ==================== FILTERS + TABLE ====================
+function applyFilters(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguard').value||'').toLowerCase();
+  
+  filteredData = ASSETS.filter(a => {
+    const matchQ = !q || 
+      (a.descripcion||'').toLowerCase().includes(q) ||
+      (a.inventario||'').toLowerCase().includes(q) ||
+      (a.serie||'').toLowerCase().includes(q) ||
+      (a.nombreResguardatario||'').toLowerCase().includes(q) ||
+      (a.numero||'').toLowerCase().includes(q) ||
+      (a.marca||'').toLowerCase().includes(q);
+    const matchR = !resguard || (a.nombreResguardatario||'').toLowerCase().includes(resguard);
+    return matchQ && matchR;
+  });
+  
+  currentPage = 1;
+  renderTable();
+  updateStats();
+}
+
+function renderTable(){
+  const tbody = document.getElementById('assetsTable');
+  const start = (currentPage-1) * PAGE_SIZE;
+  const page = filteredData.slice(start, start + PAGE_SIZE);
+  
+  tbody.innerHTML = page.map(a => `
+    <tr>
+      <td style="font-weight:600;color:var(--blue)">${a.numero}</td>
+      <td class="desc-cell">
+        <span class="desc-text">${a.descripcion}</span>
+        <span class="desc-sub">${a.marca} ${a.modelo !== 'SM' ? '· '+a.modelo : ''}</span>
+      </td>
+      <td><span class="inv-badge">${a.inventario.substring(0,22)}</span></td>
+      <td style="font-family:monospace;font-size:12px">${a.serie !== 'SN' ? a.serie : '—'}</td>
+      <td>
+        <div class="resguard-name">${a.nombreResguardatario.trim()}</div>
+        <div style="font-size:11px;color:var(--gray-mid)">${a.codResguardatario}</div>
+      </td>
+      <td style="font-size:12px">${a.marca}<br><span style="color:var(--gray-mid)">${a.modelo}</span></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-ghost btn-sm" onclick="showDetail(${a.id})" title="Ver ficha">👁</button>
+          ${canEdit() ? `<button class="btn btn-ghost btn-sm" onclick="openEditModal(${a.id})" title="Editar">✏️</button>` : ''}
+          ${currentRole === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="deleteAsset(${a.id})" title="Eliminar" style="color:var(--red)">🗑</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  
+  renderPagination();
+}
+
+function renderPagination(){
+  const total = filteredData.length;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pag = document.getElementById('pagination');
+  const pi = document.getElementById('pageInfo2');
+  if(pi) pi.textContent = `${total} bienes`;
+  
+  if(pages <= 1){ pag.innerHTML = ''; return; }
+  
+  let html = '';
+  if(currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1})">← Ant</button>`;
+  
+  const start = Math.max(1, currentPage-2);
+  const end   = Math.min(pages, currentPage+2);
+  for(let i=start;i<=end;i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  
+  if(currentPage < pages) html += `<button class="page-btn" onclick="goPage(${currentPage+1})">Sig →</button>`;
+  html += `<span class="page-info">Página ${currentPage} de ${pages}</span>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p){ currentPage=p; renderTable(); window.scrollTo(0,0); }
+
+function updateStats(){
+  const total  = ASSETS.length;
+  const resgs  = new Set(ASSETS.map(a=>a.nombreResguardatario.trim())).size;
+  const valor  = ASSETS.reduce((s,a)=>s+(a.valorAdquisicion||0),0);
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statResguardatarios').textContent = resgs;
+  document.getElementById('statFiltrados').textContent = filteredData.length || total;
+  document.getElementById('statValor').textContent = '$'+Math.round(valor).toLocaleString('es-MX');
+}
+
+// ==================== RESGUARDATARIOS VIEW ====================
+function renderResguardatarios(){
+  const q = (document.getElementById('searchResguard').value||'').toLowerCase();
+  const byPerson = {};
+  ASSETS.forEach(a=>{
+    const name = a.nombreResguardatario.trim();
+    if(!byPerson[name]) byPerson[name] = [];
+    byPerson[name].push(a);
+  });
+  
+  const sorted = Object.keys(byPerson).sort().filter(n => !q || n.toLowerCase().includes(q));
+  
+  const container = document.getElementById('resguardatarioList');
+  container.innerHTML = sorted.map(name => {
+    const items = byPerson[name];
+    const valor = items.reduce((s,a)=>s+(a.valorAdquisicion||0),0);
+    return `
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden">
+        <div style="background:var(--blue-light);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleGroup(this)">
+          <div>
+            <strong style="font-size:15px;color:var(--blue)">${name}</strong>
+            <span style="font-size:12px;color:var(--gray-mid);margin-left:8px">${items[0].codResguardatario}</span>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center">
+            <span style="font-size:12px;color:var(--gray-mid)">${items.length} bienes</span>
+            ${valor > 0 ? `<span style="font-size:12px;font-weight:600;color:var(--teal)">$${Math.round(valor).toLocaleString('es-MX')}</span>` : ''}
+            <span style="color:var(--gray-mid)">▼</span>
+          </div>
+        </div>
+        <div class="group-items" style="padding:0 16px 8px">
+          ${items.map(a => `
+            <div style="padding:8px 0;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-weight:600;color:var(--blue);font-size:12px;margin-right:8px">${a.numero}</span>
+                <span style="font-size:13px">${a.descripcion}</span>
+                <div style="font-size:11px;color:var(--gray-mid);margin-top:2px;font-family:monospace">${a.inventario}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="showDetail(${a.id})">👁 Ver</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleGroup(el){
+  const items = el.nextElementSibling;
+  items.style.display = items.style.display === 'none' ? 'block' : 'none';
+}
+
+// ==================== QR GRID ====================
+function renderQRGrid(){
+  const q = (document.getElementById('searchQR').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguardQR').value||'').toLowerCase();
+  
+  const data = ASSETS.filter(a => {
+    const matchQ = !q || a.descripcion.toLowerCase().includes(q) || a.inventario.toLowerCase().includes(q) || a.numero.includes(q);
+    const matchR = !resguard || a.nombreResguardatario.toLowerCase().includes(resguard);
+    return matchQ && matchR;
+  }).slice(0, 60); // Show max 60 in preview
+  
+  document.getElementById('qrCount').textContent = `${data.length} códigos (vista previa)`;
+  
+  const container = document.getElementById('qrGridContainer');
+  container.innerHTML = '';
+  
+  data.forEach(a => {
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;background:var(--white)';
+    
+    const qrDiv = document.createElement('div');
+    qrDiv.id = 'qr_'+a.id;
+    card.appendChild(qrDiv);
+    
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:9px;font-family:monospace;color:var(--gray-mid);margin-top:4px;word-break:break-all';
+    label.textContent = a.inventario;
+    card.appendChild(label);
+    
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:10px;font-weight:600;color:var(--gray);margin-top:4px;line-height:1.2';
+    desc.textContent = a.descripcion.substring(0,40) + (a.descripcion.length>40?'…':'');
+    card.appendChild(desc);
+    
+    const num = document.createElement('div');
+    num.style.cssText = 'font-size:9px;color:var(--blue);font-weight:700;margin-top:2px';
+    num.textContent = 'N° '+a.numero;
+    card.appendChild(num);
+    
+    container.appendChild(card);
+    
+    setTimeout(() => {
+      try {
+        new QRCode(qrDiv, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#1a56db', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+    }, 50);
+  });
+}
+
+// ==================== DETAIL VIEW ====================
+let detailAssetId = null;
+
+function showDetail(id){
+  const a = ASSETS.find(x => x.id === id);
+  if(!a) return;
+  detailAssetId = id;
+  
+  const qrUrl = window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario);
+  
+  document.getElementById('detailContent').innerHTML = `
+    <div class="asset-detail-header">
+      <div class="asset-detail-info" style="flex:1">
+        <div class="inv-num">${a.inventario}</div>
+        <h2>${a.descripcion}</h2>
+        <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">N° de bien: <strong>${a.numero}</strong></div>
+      </div>
+      <div class="asset-qr-box">
+        <div id="detail_qr" style="display:inline-block"></div>
+        <div class="qr-label">Escanear para ver ficha</div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <label>Resguardatario</label>
+        <span>${a.nombreResguardatario.trim()}</span>
+      </div>
+      <div class="detail-item">
+        <label>Código resguardatario</label>
+        <span style="font-family:monospace">${a.codResguardatario}</span>
+      </div>
+      <div class="detail-item">
+        <label>Empleado responsable</label>
+        <span>${a.empleadoResponsable || '—'}</span>
+      </div>
+      <div class="detail-item">
+        <label>N° de serie</label>
+        <span style="font-family:monospace">${a.serie !== 'SN' ? a.serie : 'Sin número'}</span>
+      </div>
+      <div class="detail-item">
+        <label>Marca</label>
+        <span>${a.marca}</span>
+      </div>
+      <div class="detail-item">
+        <label>Modelo</label>
+        <span>${a.modelo}</span>
+      </div>
+      <div class="detail-item">
+        <label>Almacén</label>
+        <span>${a.almacen || '—'}</span>
+      </div>
+      <div class="detail-item">
+        <label>Valor de adquisición</label>
+        <span style="font-weight:700;color:var(--teal)">$${(a.valorAdquisicion||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <label style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600">URL del código QR (estático)</label>
+      <div style="font-family:monospace;font-size:11px;color:var(--blue);background:var(--blue-light);padding:8px;border-radius:4px;margin-top:4px;word-break:break-all">${qrUrl}</div>
+    </div>
+  `;
+  
+  openModal('detailModal');
+  
+  setTimeout(() => {
+    try {
+      new QRCode(document.getElementById('detail_qr'), {
+        text: qrUrl,
+        width: 120, height: 120,
+        colorDark:'#1a56db', colorLight:'#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e){}
+  }, 100);
+  
+  document.getElementById('editFromDetail').style.display = canEdit() ? 'inline-flex' : 'none';
+}
+
+function editCurrentAsset(){
+  closeModal('detailModal');
+  openEditModal(detailAssetId);
+}
+
+// ==================== ADD/EDIT MODAL ====================
+function canEdit(){ return currentRole === 'admin' || currentRole === 'editor'; }
+
+function openAddModal(){
+  if(!canEdit()){ showToast('Sin permisos de edición', 'error'); return; }
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Agregar nuevo bien';
+  ['f_inventario','f_numero','f_descripcion','f_codResguard','f_nombreResguard','f_marca','f_modelo','f_serie','f_empleado'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_valor').value = '0';
+  openModal('addModal');
+}
+
+function openEditModal(id){
+  if(!canEdit()){ showToast('Sin permisos de edición', 'error'); return; }
+  const a = ASSETS.find(x => x.id === id);
+  if(!a) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar bien — ' + a.numero;
+  document.getElementById('f_inventario').value = a.inventario;
+  document.getElementById('f_numero').value = a.numero;
+  document.getElementById('f_descripcion').value = a.descripcion;
+  document.getElementById('f_codResguard').value = a.codResguardatario;
+  document.getElementById('f_nombreResguard').value = a.nombreResguardatario;
+  document.getElementById('f_marca').value = a.marca;
+  document.getElementById('f_modelo').value = a.modelo;
+  document.getElementById('f_serie').value = a.serie;
+  document.getElementById('f_empleado').value = a.empleadoResponsable;
+  document.getElementById('f_valor').value = a.valorAdquisicion;
+  openModal('addModal');
+}
+
+function saveAsset(){
+  const inventario = document.getElementById('f_inventario').value.trim();
+  const descripcion = document.getElementById('f_descripcion').value.trim();
+  if(!inventario || !descripcion){ showToast('Complete los campos obligatorios', 'error'); return; }
+  
+  const data = {
+    inventario,
+    numero: document.getElementById('f_numero').value.trim(),
+    descripcion,
+    codResguardatario: document.getElementById('f_codResguard').value.trim(),
+    nombreResguardatario: document.getElementById('f_nombreResguard').value.trim(),
+    marca: document.getElementById('f_marca').value.trim() || 'SM',
+    modelo: document.getElementById('f_modelo').value.trim() || 'SM',
+    serie: document.getElementById('f_serie').value.trim() || 'SN',
+    empleadoResponsable: document.getElementById('f_empleado').value.trim(),
+    valorAdquisicion: parseFloat(document.getElementById('f_valor').value) || 0,
+    almacen: '400'
+  };
+  
+  if(editingId){
+    const idx = ASSETS.findIndex(x => x.id === editingId);
+    if(idx >= 0) ASSETS[idx] = {...ASSETS[idx], ...data};
+    showToast('Bien actualizado', 'success');
+  } else {
+    const newId = Math.max(...ASSETS.map(a=>a.id)) + 1;
+    ASSETS.push({id: newId, ...data});
+    showToast('Bien agregado', 'success');
+  }
+  
+  saveToStorage();
+  closeModal('addModal');
+  applyFilters();
+  updateStats();
+  
+  // Update resguard filter options
+  const resguards = getUniqueResguardatarios();
+  ['filterResguard','filterResguardQR'].forEach(fid => {
+    const el = document.getElementById(fid);
+    if(!el) return;
+    const current = el.value;
+    while(el.options.length > 1) el.remove(1);
+    resguards.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.text = r;
+      el.appendChild(opt);
+    });
+    el.value = current;
+  });
+}
+
+function deleteAsset(id){
+  if(currentRole !== 'admin'){ showToast('Solo el administrador puede eliminar', 'error'); return; }
+  if(!confirm('¿Eliminar este bien del inventario? Esta acción no se puede deshacer.')) return;
+  ASSETS = ASSETS.filter(a => a.id !== id);
+  saveToStorage();
+  applyFilters();
+  updateStats();
+  showToast('Bien eliminado', 'success');
+}
+
+// ==================== SCAN VIEW ====================
+function showScanView(inventario){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('scanView').style.display = 'block';
+  
+  const asset = ASSETS.find(a => a.inventario === inventario);
+  
+  if(!asset){
+    document.getElementById('scanContent').innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:48px;margin-bottom:16px">❓</div>
+        <h2 style="color:var(--red);margin-bottom:8px">Bien no encontrado</h2>
+        <p style="color:var(--gray-mid);font-size:13px">No se encontró ningún bien con el inventario: <strong>${inventario}</strong></p>
+        <a href="${window.location.pathname}" class="btn btn-primary" style="margin-top:16px;text-decoration:none">← Ir al sistema</a>
+      </div>`;
+    return;
+  }
+  
+  document.getElementById('scanContent').innerHTML = `
+    <div style="text-align:center;padding:8px 0 4px">
+      <div style="font-size:11px;color:var(--gray-mid);letter-spacing:.5px;text-transform:uppercase">Control de Activos — RJJ09</div>
+    </div>
+
+    <!-- RESGUARDATARIO — LO MÁS IMPORTANTE -->
+    <div style="background:var(--blue);border-radius:10px;padding:18px;margin:12px 0;text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">👤 Actualmente en resguardo de</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2">${asset.nombreResguardatario.trim()}</div>
+    </div>
+
+    <!-- BIEN -->
+    <div style="background:var(--gray-light);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Bien</div>
+      <div style="font-size:17px;font-weight:700;color:var(--gray);line-height:1.3">${asset.descripcion}</div>
+      <div style="font-size:12px;color:var(--blue);font-weight:600;margin-top:4px">N° ${asset.numero}</div>
+    </div>
+
+    <!-- DATOS CLAVE -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">Marca</div>
+        <div style="font-size:14px;font-weight:600">${asset.marca}</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">Modelo</div>
+        <div style="font-size:14px;font-weight:600">${asset.modelo}</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">N° Serie</div>
+        <div style="font-size:13px;font-family:monospace;font-weight:600">${asset.serie !== 'SN' ? asset.serie : '—'}</div>
+      </div>
+
+    </div>
+
+    <!-- INVENTARIO -->
+    <div style="background:var(--blue-light);border-radius:8px;padding:10px 12px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:2px">N° Inventario</div>
+      <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--blue);word-break:break-all">${asset.inventario}</div>
+    </div>
+
+    <div style="text-align:center;padding-top:10px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--gray-mid)">Consultado: ${new Date().toLocaleString('es-MX')}</div>
+      <a href="${window.location.pathname}" style="display:inline-block;margin-top:8px;font-size:12px;color:var(--blue);text-decoration:none">← Sistema completo</a>
+    </div>
+  `;
+}
+
+// ==================== EXPORT HTML ====================
+function exportHTML(){
+  // Build a data-only JSON file instead
+  const data = {assets: ASSETS, exported: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'activos_rjj09_backup.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Datos exportados — manda este archivo para actualizar el sitio', 'success');
+}
+
+// ==================== EXPORT ====================
+function exportExcel(){
+  const data = filteredData.map(a => ({
+    'N°': a.numero,
+    'Descripción': a.descripcion,
+    'No. Inventario': a.inventario,
+    'Cód. Resguardatario': a.codResguardatario,
+    'Nombre Resguardatario': a.nombreResguardatario.trim(),
+    'Empleado Responsable': a.empleadoResponsable,
+    'Marca': a.marca,
+    'Modelo': a.modelo,
+    'N° Serie': a.serie,
+    'Valor Adquisición': a.valorAdquisicion,
+    'Almacén': a.almacen
+  }));
+  
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:8},{wch:40},{wch:28},{wch:16},{wch:35},{wch:16},{wch:20},{wch:20},{wch:18},{wch:16},{wch:8}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Activos');
+  XLSX.writeFile(wb, 'Inventario_Activos_RJJ09_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel exportado', 'success');
+}
+
+function exportPDF(){
+  const title = 'Inventario de Activos Fijos — RJJ09\n' + new Date().toLocaleString('es-MX');
+  const rows = filteredData.map(a => [
+    a.numero, a.descripcion.substring(0,40), a.inventario.substring(0,24),
+    a.nombreResguardatario.trim().substring(0,30), a.serie, '$'+Math.round(a.valorAdquisicion).toLocaleString()
+  ]);
+  
+  const headers = ['N°','Descripción','Inventario','Resguardatario','Serie','Valor'];
+  const colW = [50, 250, 160, 180, 100, 70];
+  
+  // Simple print-based PDF
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Reporte Activos</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:10px;padding:20px}
+    h2{font-size:14px;margin-bottom:4px;color:#1a56db}
+    p{font-size:10px;color:#666;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1a56db;color:#fff;padding:5px 7px;text-align:left;font-size:9px}
+    td{padding:4px 7px;border-bottom:1px solid #eee;font-size:9px}
+    tr:nth-child(even){background:#f8fafc}
+    @media print{@page{margin:10mm}}
+  </style></head><body>
+  <h2>Inventario de Activos Fijos — RJJ09</h2>
+  <p>Generado: ${new Date().toLocaleString('es-MX')} | Total: ${filteredData.length} bienes</p>
+  <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></body></html>`);
+  win.document.close();
+  setTimeout(()=>{ win.print(); }, 500);
+  showToast('Abriendo PDF para imprimir...', 'success');
+}
+
+// ==================== PRINT ALL QR ====================
+function printAllQR(){
+  const q = (document.getElementById('searchQR').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguardQR').value||'').toLowerCase();
+  const data = ASSETS.filter(a=>{
+    const mq = !q || a.descripcion.toLowerCase().includes(q) || a.inventario.toLowerCase().includes(q);
+    const mr = !resguard || a.nombreResguardatario.toLowerCase().includes(resguard);
+    return mq && mr;
+  });
+  
+  const grid = document.getElementById('printQRGrid');
+  grid.innerHTML = '';
+  
+  let done = 0;
+  data.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'qr-card';
+    
+    const qrWrap = document.createElement('div');
+    const desc = document.createElement('div');
+    desc.className = 'qr-desc';
+    desc.textContent = a.descripcion.substring(0,50);
+    const inv = document.createElement('div');
+    inv.className = 'qr-inv';
+    inv.textContent = 'N° '+a.numero+' | '+a.inventario.substring(0,22);
+    const resguard = document.createElement('div');
+    resguard.style.cssText = 'font-size:9px;color:#666;margin-top:3px';
+    resguard.textContent = a.nombreResguardatario.trim().substring(0,35);
+    
+    card.appendChild(qrWrap);
+    card.appendChild(desc);
+    card.appendChild(inv);
+    card.appendChild(resguard);
+    grid.appendChild(card);
+    
+    setTimeout(() => {
+      try {
+        new QRCode(qrWrap, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#000000', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+      done++;
+      if(done === data.length){
+        setTimeout(()=>{ window.print(); },300);
+      }
+    }, 30 * (data.indexOf(a) % 10));
+  });
+  
+  showToast(`Preparando ${data.length} QR para imprimir...`, 'success');
+}
+
+// ==================== MODAL HELPERS ====================
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+});
+
+// ==================== TOAST ====================
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ==================== START ====================
+init();
+</script>
+</body>
+</html>
