@@ -420,11 +420,9 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <script>
 // ==================== DATA ====================
-const USERS = {
-  admin:   {pass:'admin123', role:'admin',   name:'Administrador'},
-  editor:  {pass:'edit123',  role:'editor',  name:'Editor'},
-  consulta:{pass:'ver123',   role:'consulta',name:'Consulta'}
-};
+// USERS con contraseñas en texto plano eliminado: la autenticación real
+// la maneja Firebase Auth (auth.signInWithEmailAndPassword) y el rol vive
+// en Firestore (colección 'usuarios').
 
 let currentUser = null;
 let currentRole = null;
@@ -438,14 +436,6 @@ let ASSETS = [{"id":5,"numero":"00572","descripcion":"ARCHIVERO DE MADERA 4 GAVE
 
 // ==================== INIT ====================
 function renderAfterLoad(){
-  // Check scan mode
-  const params = new URLSearchParams(window.location.search);
-  const scanInv = params.get('scan');
-  if(scanInv){
-    showScanView(scanInv);
-    return;
-  }
-
   // Populate resguardatario filters
   const resguards = getUniqueResguardatarios();
   ['filterResguard','filterResguardQR'].forEach(id=>{
@@ -460,10 +450,17 @@ function renderAfterLoad(){
   });
 
   applyFilters();
+  renderResguardatarios();
   updateStats();
 }
 
-async function init(){
+// Escapa texto antes de inyectarlo en innerHTML (previene XSS almacenado/reflejado).
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function cargarDatos(){
   try{
     const doc = await db.collection('inventario').doc('data').get();
     if(doc.exists && doc.data().assets && doc.data().assets.length){
@@ -477,7 +474,56 @@ async function init(){
     const saved = localStorage.getItem('activos_rjj09');
     if(saved) ASSETS = JSON.parse(saved);
   }
+}
+
+// Reacciona cuando Firebase restaura o pierde la sesión → la sesión persiste al
+// recargar. Solo un admin autenticado carga y ve los datos.
+auth.onAuthStateChanged(async (user) => {
+  const scanInv = new URLSearchParams(window.location.search).get('scan');
+  if(!user){ mostrarLogin(); return; }
+  try{
+    const roleDoc = await db.collection('usuarios').doc(user.uid).get();
+    currentRole = roleDoc.exists ? roleDoc.data().role : 'consulta';
+  } catch(e){ currentRole = 'consulta'; }
+  currentUser = user.email;
+
+  if(currentRole !== 'admin'){
+    mostrarLogin();
+    showToast('Solo un administrador puede ver el inventario', 'error');
+    return;
+  }
+  await cargarDatos();
+  if(scanInv){ showScanView(scanInv); return; }
+  entrarApp();
   renderAfterLoad();
+});
+
+function mostrarLogin(){
+  currentUser = null; currentRole = null;
+  document.getElementById('scanView').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+}
+
+function entrarApp(){
+  document.getElementById('scanView').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = 'inline-flex';
+  document.getElementById('userDisplay').textContent = currentUser;
+  const roleLabels = {admin:'Administrador',editor:'Editor',consulta:'Solo lectura'};
+  const roleColors = {admin:'role-admin',editor:'role-editor',consulta:'role-consulta'};
+  document.getElementById('roleBadgeHeader').innerHTML =
+    `<span class="role-badge ${roleColors[currentRole]}">${roleLabels[currentRole]}</span>`;
+  if(currentRole === 'consulta') document.getElementById('addBtnMain').style.display = 'none';
+  aplicarVisibilidadQR();
+}
+
+// Solo admin ve la pestaña de códigos QR.
+function aplicarVisibilidadQR(){
+  const tab = document.getElementById('tabQR');
+  if(tab) tab.style.display = currentRole === 'admin' ? 'inline-flex' : 'none';
 }
 
 async function saveToStorage(){
@@ -515,26 +561,8 @@ async function doLogin(){
   const email = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value;
   try{
-    const cred = await auth.signInWithEmailAndPassword(email, pass);
-    const roleDoc = await db.collection('usuarios').doc(cred.user.uid).get();
-    currentRole = roleDoc.exists ? roleDoc.data().role : 'consulta';
-    currentUser = cred.user.email;
-    
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('logoutBtn').style.display = 'inline-flex';
-    document.getElementById('userDisplay').textContent = currentUser;
-    const roleLabels = {admin:'Administrador',editor:'Editor',consulta:'Solo lectura'};
-    const roleColors = {admin:'role-admin',editor:'role-editor',consulta:'role-consulta'};
-    document.getElementById('roleBadgeHeader').innerHTML = `<span class="role-badge ${roleColors[currentRole]}">${roleLabels[currentRole]}</span>`;
-    
-    if(currentRole === 'consulta'){
-      document.getElementById('addBtnMain').style.display = 'none';
-    }
-    
-    applyFilters();
-    renderResguardatarios();
-    updateStats();
+    await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged se encarga de cargar datos y mostrar la app.
   } catch(e){
     showToast('Usuario o contraseña incorrectos', 'error');
   }
@@ -542,10 +570,7 @@ async function doLogin(){
 
 function logout(){
   auth.signOut();
-  currentUser = null; currentRole = null;
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('mainApp').style.display = 'none';
-  document.getElementById('logoutBtn').style.display = 'none';
+  mostrarLogin();
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
 }
@@ -591,18 +616,18 @@ function renderTable(){
   
   tbody.innerHTML = page.map(a => `
     <tr>
-      <td style="font-weight:600;color:var(--blue)">${a.numero}</td>
+      <td style="font-weight:600;color:var(--blue)">${esc(a.numero)}</td>
       <td class="desc-cell">
-        <span class="desc-text">${a.descripcion}</span>
-        <span class="desc-sub">${a.marca} ${a.modelo !== 'SM' ? '· '+a.modelo : ''}</span>
+        <span class="desc-text">${esc(a.descripcion)}</span>
+        <span class="desc-sub">${esc(a.marca)} ${a.modelo !== 'SM' ? '· '+esc(a.modelo) : ''}</span>
       </td>
-      <td><span class="inv-badge">${a.inventario.substring(0,22)}</span></td>
-      <td style="font-family:monospace;font-size:12px">${a.serie !== 'SN' ? a.serie : '—'}</td>
+      <td><span class="inv-badge">${esc(a.inventario.substring(0,22))}</span></td>
+      <td style="font-family:monospace;font-size:12px">${a.serie !== 'SN' ? esc(a.serie) : '—'}</td>
       <td>
-        <div class="resguard-name">${a.nombreResguardatario.trim()}</div>
-        <div style="font-size:11px;color:var(--gray-mid)">${a.codResguardatario}</div>
+        <div class="resguard-name">${esc(a.nombreResguardatario.trim())}</div>
+        <div style="font-size:11px;color:var(--gray-mid)">${esc(a.codResguardatario)}</div>
       </td>
-      <td style="font-size:12px">${a.marca}<br><span style="color:var(--gray-mid)">${a.modelo}</span></td>
+      <td style="font-size:12px">${esc(a.marca)}<br><span style="color:var(--gray-mid)">${esc(a.modelo)}</span></td>
       <td>
         <div class="actions-cell">
           <button class="btn btn-ghost btn-sm" onclick="showDetail(${a.id})" title="Ver ficha">👁</button>
@@ -767,9 +792,9 @@ function showDetail(id){
   document.getElementById('detailContent').innerHTML = `
     <div class="asset-detail-header">
       <div class="asset-detail-info" style="flex:1">
-        <div class="inv-num">${a.inventario}</div>
-        <h2>${a.descripcion}</h2>
-        <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">N° de bien: <strong>${a.numero}</strong></div>
+        <div class="inv-num">${esc(a.inventario)}</div>
+        <h2>${esc(a.descripcion)}</h2>
+        <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">N° de bien: <strong>${esc(a.numero)}</strong></div>
       </div>
       <div class="asset-qr-box">
         <div id="detail_qr" style="display:inline-block"></div>
@@ -779,31 +804,31 @@ function showDetail(id){
     <div class="detail-grid">
       <div class="detail-item">
         <label>Resguardatario</label>
-        <span>${a.nombreResguardatario.trim()}</span>
+        <span>${esc(a.nombreResguardatario.trim())}</span>
       </div>
       <div class="detail-item">
         <label>Código resguardatario</label>
-        <span style="font-family:monospace">${a.codResguardatario}</span>
+        <span style="font-family:monospace">${esc(a.codResguardatario)}</span>
       </div>
       <div class="detail-item">
         <label>Empleado responsable</label>
-        <span>${a.empleadoResponsable || '—'}</span>
+        <span>${esc(a.empleadoResponsable || '—')}</span>
       </div>
       <div class="detail-item">
         <label>N° de serie</label>
-        <span style="font-family:monospace">${a.serie !== 'SN' ? a.serie : 'Sin número'}</span>
+        <span style="font-family:monospace">${a.serie !== 'SN' ? esc(a.serie) : 'Sin número'}</span>
       </div>
       <div class="detail-item">
         <label>Marca</label>
-        <span>${a.marca}</span>
+        <span>${esc(a.marca)}</span>
       </div>
       <div class="detail-item">
         <label>Modelo</label>
-        <span>${a.modelo}</span>
+        <span>${esc(a.modelo)}</span>
       </div>
       <div class="detail-item">
         <label>Almacén</label>
-        <span>${a.almacen || '—'}</span>
+        <span>${esc(a.almacen || '—')}</span>
       </div>
       <div class="detail-item">
         <label>Valor de adquisición</label>
@@ -935,15 +960,22 @@ function showScanView(inventario){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('scanView').style.display = 'block';
-  
+
+  // Solo un admin autenticado puede ver los datos del QR.
+  if(!auth.currentUser || currentRole !== 'admin'){
+    document.getElementById('scanContent').innerHTML =
+      '<p style="text-align:center;padding:20px">Inicia sesión como administrador para ver este bien.</p>';
+    return;
+  }
+
   const asset = ASSETS.find(a => a.inventario === inventario);
-  
+
   if(!asset){
     document.getElementById('scanContent').innerHTML = `
       <div style="text-align:center;padding:20px">
         <div style="font-size:48px;margin-bottom:16px">❓</div>
         <h2 style="color:var(--red);margin-bottom:8px">Bien no encontrado</h2>
-        <p style="color:var(--gray-mid);font-size:13px">No se encontró ningún bien con el inventario: <strong>${inventario}</strong></p>
+        <p style="color:var(--gray-mid);font-size:13px">No se encontró ningún bien con el inventario: <strong>${esc(inventario)}</strong></p>
         <a href="${window.location.pathname}" class="btn btn-primary" style="margin-top:16px;text-decoration:none">← Ir al sistema</a>
       </div>`;
     return;
@@ -955,30 +987,30 @@ function showScanView(inventario){
     </div>
     <div style="background:var(--blue);border-radius:10px;padding:18px;margin:12px 0;text-align:center">
       <div style="font-size:11px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">👤 Actualmente en resguardo de</div>
-      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2">${primerNombre(asset.nombreResguardatario)}</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2">${esc(primerNombre(asset.nombreResguardatario))}</div>
     </div>
     <div style="background:var(--gray-light);border-radius:10px;padding:14px;margin-bottom:12px">
       <div style="font-size:11px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Bien</div>
-      <div style="font-size:17px;font-weight:700;color:var(--gray);line-height:1.3">${asset.descripcion}</div>
-      <div style="font-size:12px;color:var(--blue);font-weight:600;margin-top:4px">N° ${asset.numero}</div>
+      <div style="font-size:17px;font-weight:700;color:var(--gray);line-height:1.3">${esc(asset.descripcion)}</div>
+      <div style="font-size:12px;color:var(--blue);font-weight:600;margin-top:4px">N° ${esc(asset.numero)}</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
         <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">Marca</div>
-        <div style="font-size:14px;font-weight:600">${asset.marca}</div>
+        <div style="font-size:14px;font-weight:600">${esc(asset.marca)}</div>
       </div>
       <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
         <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">Modelo</div>
-        <div style="font-size:14px;font-weight:600">${asset.modelo}</div>
+        <div style="font-size:14px;font-weight:600">${esc(asset.modelo)}</div>
       </div>
       <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;grid-column:1 / -1">
         <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">N° Serie</div>
-        <div style="font-size:13px;font-family:monospace;font-weight:600">${asset.serie !== 'SN' ? asset.serie : '—'}</div>
+        <div style="font-size:13px;font-family:monospace;font-weight:600">${asset.serie !== 'SN' ? esc(asset.serie) : '—'}</div>
       </div>
     </div>
     <div style="background:var(--blue-light);border-radius:8px;padding:10px 12px;margin-bottom:14px">
       <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:2px">N° Inventario</div>
-      <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--blue);word-break:break-all">${asset.inventario}</div>
+      <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--blue);word-break:break-all">${esc(asset.inventario)}</div>
     </div>
     <div style="text-align:center;padding-top:10px;border-top:1px solid var(--border)">
       <div style="font-size:10px;color:var(--gray-mid)">Consultado: ${new Date().toLocaleString('es-MX')}</div>
@@ -1133,7 +1165,8 @@ function showToast(msg, type=''){
 }
 
 // ==================== START ====================
-init();
+// El arranque lo dispara auth.onAuthStateChanged: si hay sesión de admin,
+// carga datos y muestra la app; si no, muestra el login.
 </script>
 </body>
 </html>
