@@ -489,9 +489,20 @@ async function saveToStorage(){
     showToast('Sin conexión: el cambio solo se guardó en este dispositivo', 'error');
   }
 }
+const EXCEPCIONES_NOMBRE = {
+  'GEMMA ABISAY  ORTIZ': 'GEMMA ABISAY',
+  'JORGE  DAVID MARTINEZ': 'JORGE DAVID',
+  'JUAN  DAVID  TORRES': 'JUAN DAVID',
+  'VICTOR OMAR  MINERO': 'VICTOR OMAR',
+  'XIMENA SARAI  POSADAS': 'XIMENA SARAI',
+  'CELIA  ELIZABETH  PIGUERON': 'CELIA ELIZABETH'
+};
+
 function primerNombre(nombreCompleto){
-  const partes = nombreCompleto.trim().replace(/\s+/g,' ').split(' ');
-  if(partes.length <= 2) return partes[0];
+  const limpio = nombreCompleto.trim();
+  if(EXCEPCIONES_NOMBRE[limpio]) return EXCEPCIONES_NOMBRE[limpio];
+  const partes = limpio.split(/\s+/).filter(p => p.length > 0);
+  if(partes.length <= 2) return partes[0] || '';
   return partes.slice(0, partes.length - 2).join(' ');
 }
 function getUniqueResguardatarios(){
