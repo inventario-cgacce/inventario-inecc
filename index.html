@@ -134,6 +134,10 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
   .qr-grid{gap:8px}
   .qr-card{padding:8px}
 }
+/* SPLASH */
+@keyframes spin{to{transform:rotate(360deg)}}
+#authSplash{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;min-height:calc(100vh - 56px)}
+#authSplash .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
@@ -191,8 +195,14 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
   </div>
 </div>
 
+<!-- SPLASH: se muestra mientras Firebase restaura la sesión, evita el parpadeo del login -->
+<div id="authSplash">
+  <div class="spinner"></div>
+  <span style="font-size:13px;color:var(--gray-mid)">Cargando…</span>
+</div>
+
 <!-- LOGIN -->
-<div id="loginScreen">
+<div id="loginScreen" style="display:none">
 <video autoplay muted loop playsinline id="loginVideoBg">
     <source src="login-bg.mp4?v=2" type="video/mp4">
   </video>
@@ -500,6 +510,7 @@ auth.onAuthStateChanged(async (user) => {
 
 function mostrarLogin(){
   currentUser = null; currentRole = null;
+  document.getElementById('authSplash').style.display = 'none';
   document.getElementById('scanView').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('mainApp').style.display = 'none';
@@ -507,6 +518,7 @@ function mostrarLogin(){
 }
 
 function entrarApp(){
+  document.getElementById('authSplash').style.display = 'none';
   document.getElementById('scanView').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
@@ -957,6 +969,7 @@ function deleteAsset(id){
 
 // ==================== SCAN VIEW ====================
 function showScanView(inventario){
+  document.getElementById('authSplash').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'none';
   document.getElementById('scanView').style.display = 'block';
