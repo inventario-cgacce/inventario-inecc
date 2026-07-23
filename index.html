@@ -489,7 +489,11 @@ async function saveToStorage(){
     showToast('Sin conexión: el cambio solo se guardó en este dispositivo', 'error');
   }
 }
-
+function primerNombre(nombreCompleto){
+  const partes = nombreCompleto.trim().replace(/\s+/g,' ').split(' ');
+  if(partes.length <= 2) return partes[0];
+  return partes.slice(0, partes.length - 2).join(' ');
+}
 function getUniqueResguardatarios(){
   const names = [...new Set(ASSETS.map(a => a.nombreResguardatario.trim()))].sort();
   return names.filter(n => n.length > 0);
@@ -940,7 +944,7 @@ function showScanView(inventario){
     </div>
     <div style="background:var(--blue);border-radius:10px;padding:18px;margin:12px 0;text-align:center">
       <div style="font-size:11px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">👤 Actualmente en resguardo de</div>
-      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2">${asset.nombreResguardatario.trim()}</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2">${primerNombre(asset.nombreResguardatario)}</div>
     </div>
     <div style="background:var(--gray-light);border-radius:10px;padding:14px;margin-bottom:12px">
       <div style="font-size:11px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Bien</div>
