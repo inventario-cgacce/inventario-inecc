@@ -281,49 +281,38 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none">
-/* El video cubre toda la pantalla en segundo plano */
-#bg-video {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -1;
-}
+<style>
+  #bg-video {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: -1; /* Lo manda detrás de todos los elementos */
+  }
 
-/* El body se mantiene transparente */
-body {
-  margin: 0;
-  padding: 0;
-  background: transparent !important;
-}
-<body>
-  <video autoplay loop muted playsinline id="bg-video">
-    <source src="tu-video-original.mp4" type="video/mp4">
-  </video>
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+  }
+</style>
 
-  </body>
+<video autoplay loop muted playsinline id="bg-video">
+  <source src="tu-video.mp4" type="video/mp4">
+  Tu navegador no soporta videos en HTML5.
+</video>
 
-    /* Asegura que el login quede sobre el video */
-    .login-container {
-      position: relative;
-      z-index: 1;
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const video = document.getElementById('bg-video');
+    if (video) {
+      video.muted = true;
+      video.play().catch(err => console.log("Autoplay bloqueado por el navegador:", err));
     }
-  </style>
-</head>
-
-<body>
-
-  <video autoplay loop muted playsinline id="bg-video">
-    <source src="fondo-mar.mp4" type="video/mp4">
-    Tu navegador no soporta video.
-  </video>
-
-  <div class="login-container">
-    </div>
-
-</body>
+  });
+</script>
 </html>
 
   <div id="loginOverlay"></div>
