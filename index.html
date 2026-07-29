@@ -281,9 +281,14 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none">
+<!DOCTYPE html>
+<html lang="es">
 <head>
+  <meta charset="UTF-8">
+  <title>Sistema de Control de Activos</title>
+  
   <style>
-    /* Pegar AQUÍ el código de estilos */
+    /* Estilos del video de fondo */
     #bg-video {
       position: fixed;
       right: 0;
@@ -292,27 +297,42 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
       min-height: 100%;
       width: auto;
       height: auto;
-      z-index: -1; /* Manda el video al fondo */
-      object-fit: cover; /* Evita que se deforme */
+      z-index: -1; /* Lo envía detrás de todo */
+      object-fit: cover;
     }
 
-    /* Asegura que el formulario cargue encima */
+    /* Estilos para alinear el login a la derecha */
+    body {
+      display: flex;
+      justify-content: flex-end; /* Alinea la tarjeta a la derecha */
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding-right: 50px; /* Espacio con el borde derecho */
+      font-family: sans-serif;
+    }
+
+    /* Asegura que el login quede sobre el video */
     .login-container {
       position: relative;
       z-index: 1;
     }
-    
-    /* Mueve el formulario a la derecha como en tu imagen */
-    body {
-      display: flex;
-      justify-content: flex-end; /* Alinea el contenido a la derecha */
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding-right: 50px; /* Espacio desde el borde derecho */
-    }
   </style>
 </head>
+
+<body>
+
+  <video autoplay loop muted playsinline id="bg-video">
+    <source src="fondo-mar.mp4" type="video/mp4">
+    Tu navegador no soporta video.
+  </video>
+
+  <div class="login-container">
+    </div>
+
+</body>
+</html>
+
   <div id="loginOverlay"></div>
   <div class="login-card">
     <h2>Iniciar sesión</h2>
