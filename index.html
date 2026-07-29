@@ -281,17 +281,38 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none">
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const video = document.getElementById('bg-video');
-    if (video) {
-      video.muted = true; // Asegura silencio para evitar bloqueos
-      video.play().catch(error => {
-        console.log("El navegador bloqueó la reproducción automática:", error);
-      });
+<head>
+  <style>
+    /* Pegar AQUÍ el código de estilos */
+    #bg-video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -1; /* Manda el video al fondo */
+      object-fit: cover; /* Evita que se deforme */
     }
-  });
-</script>
+
+    /* Asegura que el formulario cargue encima */
+    .login-container {
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Mueve el formulario a la derecha como en tu imagen */
+    body {
+      display: flex;
+      justify-content: flex-end; /* Alinea el contenido a la derecha */
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding-right: 50px; /* Espacio desde el borde derecho */
+    }
+  </style>
+</head>
   <div id="loginOverlay"></div>
   <div class="login-card">
     <h2>Iniciar sesión</h2>
