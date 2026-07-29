@@ -128,18 +128,17 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 .qr-card .qr-desc{font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3}
 .qr-card .qr-inv{font-size:8px;color:#888;margin-top:2px;font-family:monospace}
 @media print {
-  /* 1. Ocultar todo el contenido secundario de la página */
+  /* 1. Ocultar todo lo demás */
   body * {
     visibility: hidden;
   }
 
-  /* 2. Mostrar únicamente el contenedor de impresión y sus elementos internos */
+  /* 2. Mostrar área de impresión */
   #printView, 
   #printView * {
     visibility: visible;
   }
 
-  /* 3. Posicionar el área de impresión para que tome todo el flujo natural */
   #printView {
     display: block !important;
     position: absolute;
@@ -147,25 +146,43 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
     left: 0;
     width: 100%;
     background: #ffffff;
-    overflow: visible;
   }
 
-  /* 4. Estructura de la cuadrícula de tarjetas/códigos QR */
+  /* 3. Margen para que el título no se encime en la tabla */
+  #printQRGrid {
+    margin-top: 25px !important;
+    width: 100%;
+  }
+
+  /* 4. Tabla con celdas de tamaño fijo */
   #printQRGrid table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed; /* Mantiene el ancho estricto de las columnas */
   }
 
   #printQRGrid td {
-    border: 1.5px solid #ccc;
-    padding: 10px;
+    border: 1px solid #ccc;
+    padding: 10px 6px;
     text-align: center;
     vertical-align: top;
     width: 33.33%;
     box-sizing: border-box;
+    word-wrap: break-word; /* Evita que textos largos deformen la celda */
   }
 
-  /* 5. Asegurar que ningún cuadro QR se parta por la mitad entre hojas */
+  /* 5. FIX DEL DEFORME: Forzar tamaño cuadrado en las imágenes y canvas del QR */
+  #printQRGrid canvas,
+  #printQRGrid img {
+    width: 90px !important;
+    height: 90px !important;
+    max-width: 90px !important;
+    max-height: 90px !important;
+    display: block !important;
+    margin: 0 auto 6px auto !important;
+  }
+
+  /* 6. Evitar cortes a la mitad entre hojas */
   #printQRGrid tr {
     page-break-inside: avoid;
     break-inside: avoid;
