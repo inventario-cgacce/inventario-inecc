@@ -281,24 +281,17 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none">
-/* Hacer que el video ocupe toda la pantalla de fondo */
-#bg-video {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
-  z-index: -1; /* Lo manda al fondo de todo */
-  object-fit: cover; /* Asegura que no se deforme la imagen */
-}
-
-/* Asegurar que el contenedor del formulario quede encima */
-.login-container {
-  position: relative;
-  z-index: 1;
-}
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const video = document.getElementById('bg-video');
+    if (video) {
+      video.muted = true; // Asegura silencio para evitar bloqueos
+      video.play().catch(error => {
+        console.log("El navegador bloqueó la reproducción automática:", error);
+      });
+    }
+  });
+</script>
   <div id="loginOverlay"></div>
   <div class="login-card">
     <h2>Iniciar sesión</h2>
