@@ -289,19 +289,16 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
     width: 100vw;
     height: 100vh;
     object-fit: cover;
-    z-index: -1; /* Lo manda detrás de todos los elementos */
+    z-index: -1;
   }
 
   body {
-    margin: 0;
-    padding: 0;
     background: transparent !important;
   }
 </style>
 
 <video autoplay loop muted playsinline id="bg-video">
-  <source src="tu-video.mp4" type="video/mp4">
-  Tu navegador no soporta videos en HTML5.
+  <source src="login-bg.mp4" type="video/mp4">
 </video>
 
 <script>
@@ -309,7 +306,7 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
     const video = document.getElementById('bg-video');
     if (video) {
       video.muted = true;
-      video.play().catch(err => console.log("Autoplay bloqueado por el navegador:", err));
+      video.play().catch(err => console.log("Autoplay:", err));
     }
   });
 </script>
