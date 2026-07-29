@@ -281,6 +281,23 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none">
+/* El video cubre toda la pantalla en segundo plano */
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+}
+
+/* El body se mantiene transparente */
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+}
 <body>
   <video autoplay loop muted playsinline id="bg-video">
     <source src="tu-video-original.mp4" type="video/mp4">
