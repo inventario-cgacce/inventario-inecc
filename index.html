@@ -127,13 +127,53 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 .qr-card .qr-codigo{font-size:10px;font-family:monospace;color:#555;margin-bottom:4px;word-break:break-all}
 .qr-card .qr-desc{font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3}
 .qr-card .qr-inv{font-size:8px;color:#888;margin-top:2px;font-family:monospace}
-@media print{
-  body *{visibility:hidden}
-  #printView,#printView *{visibility:visible}
-  #printView{display:block!important;position:fixed;inset:0;background:#fff;overflow:visible}
-  #printQRGrid table{width:100%;border-collapse:collapse}
-  #printQRGrid td{border:1.5px solid #ccc;padding:10px;text-align:center;vertical-align:top;width:33.33%}
-  #printQRGrid tr{page-break-inside:avoid}
+@media print {
+  /* 1. Ocultar todo el contenido secundario de la página */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Mostrar únicamente el contenedor de impresión y sus elementos internos */
+  #printView, 
+  #printView * {
+    visibility: visible;
+  }
+
+  /* 3. Posicionar el área de impresión para que tome todo el flujo natural */
+  #printView {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    overflow: visible;
+  }
+
+  /* 4. Estructura de la cuadrícula de tarjetas/códigos QR */
+  #printQRGrid table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #printQRGrid td {
+    border: 1.5px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    vertical-align: top;
+    width: 33.33%;
+    box-sizing: border-box;
+  }
+
+  /* 5. Asegurar que ningún cuadro QR se parta por la mitad entre hojas */
+  #printQRGrid tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  @page {
+    margin: 1cm;
+  }
 }
 /* SPLASH */
 @keyframes spin{to{transform:rotate(360deg)}}
