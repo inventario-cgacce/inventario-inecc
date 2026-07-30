@@ -1153,9 +1153,14 @@ function printAllQR(){
   const table = document.createElement('table');
   let row = null;
 
+  let filaCount = 0;
   data.forEach((a, i) => {
     if(i % 3 === 0){
       row = document.createElement('tr');
+      filaCount++;
+      if(filaCount % 7 === 0){
+        row.style.pageBreakAfter = 'always';
+      }
       table.appendChild(row);
     }
     const td = document.createElement('td');
