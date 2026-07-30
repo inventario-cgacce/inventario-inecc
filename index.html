@@ -131,11 +131,15 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
   body *{visibility:hidden}
   #printView,#printView *{visibility:visible}
   #printView{display:block!important;position:fixed;inset:0;background:#fff;overflow:visible}
-  #printQRGrid table{width:100%;border-collapse:collapse;table-layout:fixed}
+  .qr-print-page{break-after:page;page-break-after:always}
+  .qr-print-page:last-child{break-after:auto;page-break-after:auto}
+  #printQRGrid table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
   #printQRGrid td{border:1px solid #ccc;padding:10px 8px;text-align:center;vertical-align:top;width:33.333%;box-sizing:border-box}
   #printQRGrid td canvas{width:110px!important;height:110px!important;margin:0 auto}
-  #printQRGrid td div{font-size:8.5pt;line-height:1.2;color:#000;word-break:break-all}
-  #printQRGrid tr{page-break-inside:avoid}
+  #printQRGrid .qr-desc-print{font-size:8.5pt;line-height:1.2;color:#000;font-weight:600;word-break:break-all}
+  #printQRGrid .qr-inv-print{font-size:7pt;color:#555;font-family:monospace;margin-top:2px}
+  #printQRGrid .qr-resguard-print{font-size:7.5pt;color:#333;margin-top:2px}
+  #printQRGrid tr{page-break-inside:avoid;break-inside:avoid}
   @page{size:letter portrait;margin:10mm}
 }
 /* SPLASH */
@@ -1150,51 +1154,60 @@ function printAllQR(){
 
   const container = document.getElementById('printQRGrid');
   container.innerHTML = '';
-  const table = document.createElement('table');
-  let row = null;
 
-  let filaCount = 0;
-  data.forEach((a, i) => {
-    if(i % 3 === 0){
-      row = document.createElement('tr');
-      filaCount++;
-      if(filaCount % 7 === 0){
-        row.style.pageBreakAfter = 'always';
+  const COLS = 3;
+  const ROWS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = COLS * ROWS_PER_PAGE;
+  const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+
+  for(let p = 0; p < totalPages; p++){
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'qr-print-page';
+    const pageItems = data.slice(p*ITEMS_PER_PAGE, (p+1)*ITEMS_PER_PAGE);
+
+    const table = document.createElement('table');
+    let row = null;
+
+    pageItems.forEach((a, i) => {
+      if(i % COLS === 0){
+        row = document.createElement('tr');
+        table.appendChild(row);
       }
-      table.appendChild(row);
+      const td = document.createElement('td');
+      const qrWrap = document.createElement('div');
+      td.appendChild(qrWrap);
+      const desc = document.createElement('div');
+      desc.className = 'qr-desc-print';
+      desc.textContent = a.descripcion.substring(0,50);
+      td.appendChild(desc);
+      const inv = document.createElement('div');
+      inv.className = 'qr-inv-print';
+      inv.textContent = 'N° '+a.numero+' | '+a.inventario.substring(0,22);
+      td.appendChild(inv);
+      const resguardText = document.createElement('div');
+      resguardText.className = 'qr-resguard-print';
+      resguardText.textContent = a.nombreResguardatario.trim().substring(0,35);
+      td.appendChild(resguardText);
+      row.appendChild(td);
+
+      try {
+        new QRCode(qrWrap, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#000000', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+    });
+
+    while(row && row.children.length < COLS){
+      row.appendChild(document.createElement('td'));
     }
-    const td = document.createElement('td');
-    const qrWrap = document.createElement('div');
-    td.appendChild(qrWrap);
-    const desc = document.createElement('div');
-    desc.style.cssText = 'font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3';
-    desc.textContent = a.descripcion.substring(0,50);
-    td.appendChild(desc);
-    const inv = document.createElement('div');
-    inv.style.cssText = 'font-size:8px;color:#888;margin-top:2px;font-family:monospace';
-    inv.textContent = 'N° '+a.numero+' | '+a.inventario.substring(0,22);
-    td.appendChild(inv);
-    const resguardText = document.createElement('div');
-    resguardText.style.cssText = 'font-size:9px;color:#666;margin-top:3px';
-    resguardText.textContent = a.nombreResguardatario.trim().substring(0,35);
-    td.appendChild(resguardText);
-    row.appendChild(td);
 
-    try {
-      new QRCode(qrWrap, {
-        text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
-        width: 100, height: 100,
-        colorDark:'#000000', colorLight:'#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } catch(e){}
-  });
-
-  while(row && row.children.length < 3){
-    row.appendChild(document.createElement('td'));
+    pageDiv.appendChild(table);
+    container.appendChild(pageDiv);
   }
 
-  container.appendChild(table);
   showToast(`Preparando ${data.length} QR para imprimir...`, 'success');
   setTimeout(()=>{ window.print(); }, 1500);
 }
