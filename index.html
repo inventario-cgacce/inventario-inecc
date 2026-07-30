@@ -127,78 +127,20 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 .qr-card .qr-codigo{font-size:10px;font-family:monospace;color:#555;margin-bottom:4px;word-break:break-all}
 .qr-card .qr-desc{font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3}
 .qr-card .qr-inv{font-size:8px;color:#888;margin-top:2px;font-family:monospace}
-@media print {
-  /* 1. Ocultar el resto de la interfaz */
-  /* 1. Ocultar la interfaz normal */
-  body * {
-    visibility: hidden !important;
-  }
-
-  /* 2. Mostrar área de impresión */
-  /* 2. Mostrar únicamente el contenedor de impresión */
-  #printView, 
-  #printView * {
-    visibility: visible !important;
-  }
-
-  /* 3. FORZAR ANCHO TOTAL EN TODOS LOS CONTENEDORES PADRE */
-  html, body, #printView, #printQRGrid {
-    display: block !important;
-  /* 3. ROMPER RESTRICCIONES DE ANCHO EN TODOS LOS PADRES */
-  html, body, div, main, section, #printView, #printQRGrid {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-@@ -153,64 +152,64 @@
-    background: #ffffff !important;
-  }
-
-  /* 4. Estructura de la tabla abarcando toda la hoja */
-  /* 4. Estructura de la tabla a ancho completo */
-  #printQRGrid {
-    margin-top: 20px !important;
-    position: relative !important;
-    margin-top: 15px !important;
-    width: 100% !important;
-  }
-
-  #printQRGrid table {
-    width: 100% !important;
-    min-width: 100% !important;
-    border-collapse: collapse !important;
-    table-layout: fixed !important; /* Mantiene 3 columnas exactamente iguales */
-    table-layout: fixed !important;
-  }
-
-  #printQRGrid td {
-    border: 1px solid #ccc !important;
-    padding: 10px 6px !important;
-    padding: 10px 8px !important;
-    text-align: center !important;
-    vertical-align: top !important;
-    width: 33.333% !important;
-    box-sizing: border-box !important;
-    word-break: break-all !important;
-  }
-
-  /* 5. OCULTAR CANVAS duplicado de la librería */
-  /* 5. Ocultar canvas sobrantes de la librería JS */
-  #printQRGrid canvas {
-    display: none !important;
-  }
-
-  /* 6. Tamaño óptimo del QR para columna ancha */
-  /* 6. TAMAÑO DE CÓDIGO QR MÁS GRANDE (Equilibrado) */
-  #printQRGrid img {
-    display: block !important;
-    width: 100px !important;
-    height: 100px !important;
-    width: 130px !important;  /* Tamaño más visible y legible */
-    height: 130px !important;
-    max-width: 100% !important;
-    margin: 0 auto 8px auto !important;
-    object-fit: contain !important;
-  }
+@media print{
+  body > *:not(#printView){display:none!important}
+  #printView{display:block!important;background:#fff}
+  .qr-print-page{break-after:page;page-break-after:always}
+  .qr-print-page:last-child{break-after:auto;page-break-after:auto}
+  #printQRGrid table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  #printQRGrid td{border:1px solid #ccc;padding:10px 8px;text-align:center;vertical-align:top;width:33.333%;box-sizing:border-box}
+  #printQRGrid td canvas{width:110px!important;height:110px!important;margin:0 auto}
+  #printQRGrid .qr-desc-print{font-size:8.5pt;line-height:1.2;color:#000;font-weight:600;word-break:break-all}
+  #printQRGrid .qr-inv-print{font-size:7pt;color:#555;font-family:monospace;margin-top:2px}
+  #printQRGrid .qr-resguard-print{font-size:7.5pt;color:#333;margin-top:2px}
+  #printQRGrid tr{page-break-inside:avoid;break-inside:avoid}
+  @page{size:letter portrait;margin:10mm}
+}
 /* SPLASH */
 @keyframes spin{to{transform:rotate(360deg)}}
 #authSplash{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;min-height:calc(100vh - 56px)}
