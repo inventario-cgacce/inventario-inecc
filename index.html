@@ -130,7 +130,7 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 @media print{
   body *{visibility:hidden}
   #printView,#printView *{visibility:visible}
-  #printView{display:block!important;position:fixed;inset:0;background:#fff;overflow:visible}
+  #printView{display:block!important;position:static;background:#fff;overflow:visible}
   .qr-print-page{break-after:page;page-break-after:always}
   .qr-print-page:last-child{break-after:auto;page-break-after:auto}
   #printQRGrid table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
