@@ -128,9 +128,8 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 .qr-card .qr-desc{font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3}
 .qr-card .qr-inv{font-size:8px;color:#888;margin-top:2px;font-family:monospace}
 @media print{
-  body *{visibility:hidden}
-  #printView,#printView *{visibility:visible}
-  #printView{display:block!important;position:static;background:#fff;overflow:visible}
+  body > *:not(#printView){display:none!important}
+  #printView{display:block!important;background:#fff}
   .qr-print-page{break-after:page;page-break-after:always}
   .qr-print-page:last-child{break-after:auto;page-break-after:auto}
   #printQRGrid table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
