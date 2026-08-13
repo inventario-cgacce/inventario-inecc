@@ -1116,8 +1116,8 @@ function exportExcel(){
 function exportPDF(){
   const title = 'Inventario de Activos Fijos — RJJ09\n' + new Date().toLocaleString('es-MX');
   const rows = filteredData.map(a => [
-    a.numero, a.descripcion.substring(0,40), a.inventario.substring(0,24),
-    a.nombreResguardatario.trim().substring(0,30), a.serie, '$'+Math.round(a.valorAdquisicion).toLocaleString()
+    esc(a.numero), esc(a.descripcion.substring(0,40)), esc(a.inventario.substring(0,24)),
+    esc(a.nombreResguardatario.trim().substring(0,30)), esc(a.serie), '$'+Math.round(a.valorAdquisicion).toLocaleString()
   ]);
   
   const headers = ['N°','Descripción','Inventario','Resguardatario','Serie','Valor'];
