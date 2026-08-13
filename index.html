@@ -506,13 +506,13 @@ function esc(s){
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-async function cargarDatos(){
+async function cargarDatos(rol){
   try{
-    const doc = await db.collection('inventario').doc('data').get();
+    const docId = (rol === 'admin' || rol === 'editor') ? 'data' : 'data_publico';
+    const doc = await db.collection('inventario').doc(docId).get();
     if(doc.exists && doc.data().assets && doc.data().assets.length){
       ASSETS = doc.data().assets;
-    } else {
-      // Primera vez: sube los datos originales a la nube
+    } else if(docId === 'data'){
       await db.collection('inventario').doc('data').set({assets: ASSETS});
     }
   } catch(e){
@@ -521,7 +521,6 @@ async function cargarDatos(){
     if(saved) ASSETS = JSON.parse(saved);
   }
 }
-
 // Reacciona cuando Firebase restaura o pierde la sesión → la sesión persiste al
 // recargar. Solo un admin autenticado carga y ve los datos.
 auth.onAuthStateChanged(async (user) => {
@@ -538,7 +537,7 @@ auth.onAuthStateChanged(async (user) => {
     showToast('Solo un administrador puede ver el inventario', 'error');
     return;
   }
-  await cargarDatos();
+ await cargarDatos(currentRole);
   if(scanInv){ showScanView(scanInv); return; }
   entrarApp();
   renderAfterLoad();
@@ -578,6 +577,13 @@ async function saveToStorage(){
   localStorage.setItem('activos_rjj09', JSON.stringify(ASSETS));
   try{
     await db.collection('inventario').doc('data').set({assets: ASSETS});
+    const publico = ASSETS.map(a => {
+      const copia = {...a};
+      delete copia.empleadoResponsable;
+      delete copia.valorAdquisicion;
+      return copia;
+    });
+    await db.collection('inventario').doc('data_publico').set({assets: publico});
   } catch(e){
     console.error('Error guardando en Firestore', e);
     showToast('Sin conexión: el cambio solo se guardó en este dispositivo', 'error');
