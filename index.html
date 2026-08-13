@@ -22,8 +22,10 @@ const firebaseConfig = {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   const auth = firebase.auth();
-const appCheck = firebase.appCheck();
-  appCheck.activate('6LdWXYQtAAAAAEv8x5FxCPlX9z6QVgjnIE_DGhUb', true);
+window.addEventListener('DOMContentLoaded', function(){
+    const appCheck = firebase.appCheck();
+    appCheck.activate('6LdWXYQtAAAAAEv8x5FxCPlX9z6QVgjnIE_DGhUb', true);
+  });
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
