@@ -549,7 +549,6 @@ function aplicarVisibilidadQR(){
 }
 
 async function saveToStorage(){
-  localStorage.setItem('activos_rjj09', JSON.stringify(ASSETS));
   try{
     await db.collection('inventario').doc('data').set({assets: ASSETS});
     const publico = ASSETS.map(a => {
@@ -559,8 +558,10 @@ async function saveToStorage(){
       return copia;
     });
     await db.collection('inventario').doc('data_publico').set({assets: publico});
+    localStorage.removeItem('activos_rjj09');
   } catch(e){
     console.error('Error guardando en Firestore', e);
+    localStorage.setItem('activos_rjj09', JSON.stringify(ASSETS));
     showToast('Sin conexión: el cambio solo se guardó en este dispositivo', 'error');
   }
 }
@@ -599,11 +600,11 @@ async function doLogin(){
 
 function logout(){
   auth.signOut();
+  localStorage.removeItem('activos_rjj09');
   mostrarLogin();
   document.getElementById('loginUser').value = '';
   document.getElementById('loginPass').value = '';
 }
-
 // ==================== TABS ====================
 function showTab(tab){
   ['inventario','por-resguardatario','qr-codes'].forEach(t=>{
