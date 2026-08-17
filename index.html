@@ -216,37 +216,11 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
 
 <!-- LOGIN -->
 <div id="loginScreen" style="display:none">
-<style>
-  #bg-video {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    object-fit: cover;
-    z-index: -1;
-  }
+  <div id="loginOverlay"></div>
+  <div class="login-card">
 
-  body {
-    background: transparent !important;
-  }
-</style>
-
-<video autoplay loop muted playsinline id="bg-video">
-  <source src="login-bg.mp4" type="video/mp4">
-</video>
-
-<script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const video = document.getElementById('bg-video');
-    if (video) {
-      video.muted = true;
-      video.play().catch(err => console.log("Autoplay:", err));
-    }
-  });
-</script>
-</html>
-
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none">
   <div id="loginOverlay"></div>
   <div class="login-card">
     <h2>Iniciar sesión</h2>
@@ -262,7 +236,6 @@ tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
     <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px" onclick="doLogin()">Entrar</button>
   </div>
 </div>
-
 <!-- MAIN APP -->
 <div id="mainApp" style="display:none">
   <div class="container">
