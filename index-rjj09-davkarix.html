@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Control de Activos — RJJ09</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check-compat.js"></script>
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyBkIzwu0ClTuZTl5KGsDlgQYKRWr3GdhSg",
+    authDomain: "inventario-cgacce.firebaseapp.com",
+    projectId: "inventario-cgacce",
+    storageBucket: "inventario-cgacce.firebasestorage.app",
+    messagingSenderId: "291366802478",
+    appId: "1:291366802478:web:527b2906efc00b5f54fbbf"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+window.addEventListener('DOMContentLoaded', function(){
+    const appCheck = firebase.appCheck();
+    appCheck.activate('6LdWXYQtAAAAAEv8x5FxCPlX9z6QVgjnIE_DGhUb', true);
+  });
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#166534;--blue-light:#f0fdf4;--blue-mid:#15803d;
+  --teal:#0d9488;--teal-light:#f0fdfa;
+  --amber:#d97706;--amber-light:#fffbeb;
+  --red:#dc2626;--red-light:#fef2f2;
+  --green:#16a34a;--green-light:#f0fdf4;
+  --gray:#374151;--gray-light:#f9fafb;--gray-mid:#6b7280;--border:#e5e7eb;
+  --white:#fff;--radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f3f4f6;color:var(--gray);min-height:100vh}
+/* HEADER */
+.header{background:var(--blue);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-logo{font-weight:700;font-size:16px;letter-spacing:.3px}
+.header-logo span{opacity:.7;font-weight:400;font-size:13px;margin-left:8px}
+.header-actions{display:flex;gap:8px}
+.btn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-white{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-white:hover{background:rgba(255,255,255,.25)}
+.btn-primary{background:var(--blue-mid);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:#0f766e}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--gray);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--gray-light)}
+/* MAIN LAYOUT */
+.container{max-width:1400px;margin:0 auto;padding:20px 16px}
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 56px);position:relative;overflow:hidden}
+#loginVideoBg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0}
+#loginOverlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,.35);z-index:1}
+.login-card{background:var(--white);border-radius:12px;padding:40px;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.1);position:relative;z-index:2}
+.login-card h2{font-size:22px;font-weight:700;color:var(--blue);margin-bottom:6px}
+.login-card p{color:var(--gray-mid);font-size:13px;margin-bottom:28px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,
+.form-group select,
+.form-group textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:14px;color:var(--gray);transition:border .15s;background:var(--white)}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.12)}
+.form-group textarea{resize:vertical;min-height:80px}
+.login-users{margin-top:20px;font-size:12px;color:var(--gray-mid);background:var(--gray-light);padding:12px;border-radius:6px;line-height:1.8}
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);border-left:3px solid var(--blue)}
+.stat-card.teal{border-left-color:var(--teal)}
+.stat-card.amber{border-left-color:var(--amber)}
+.stat-card.green{border-left-color:var(--green)}
+.stat-num{font-size:26px;font-weight:700;color:var(--gray);line-height:1}
+.stat-label{font-size:11px;color:var(--gray-mid);margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+/* TOOLBAR */
+.toolbar{background:var(--white);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow)}
+.search-wrap{position:relative;flex:1;min-width:200px}
+.search-wrap input{padding-left:34px;width:100%}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-mid);font-size:16px}
+.toolbar select{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--gray);background:var(--white);cursor:pointer}
+/* TABLE */
+.table-wrap{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.table-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.table-header span{font-size:13px;color:var(--gray-mid)}
+table{width:100%;border-collapse:collapse}
+thead th{background:#f8fafc;padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid #f3f4f6;transition:background .1s}
+tbody tr:hover{background:#f8fafc}
+tbody td{padding:10px 14px;font-size:13px;color:var(--gray)}
+.inv-badge{font-family:monospace;font-size:11px;background:var(--blue-light);color:var(--blue);padding:2px 6px;border-radius:4px;white-space:nowrap}
+.desc-cell{max-width:280px}
+.desc-text{font-size:13px;font-weight:500;display:block}
+.desc-sub{font-size:11px;color:var(--gray-mid);margin-top:1px}
+.resguard-name{font-weight:500;font-size:12px}
+.actions-cell{display:flex;gap:4px;justify-content:flex-end}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:12px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-head{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--white);z-index:1}
+.modal-head h3{font-size:17px;font-weight:700;color:var(--gray)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-light);border-radius:0 0 12px 12px}
+.close-btn{background:none;border:none;cursor:pointer;color:var(--gray-mid);font-size:22px;line-height:1;padding:2px}
+.close-btn:hover{color:var(--gray)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+/* ASSET DETAIL VIEW */
+.asset-detail-header{display:flex;gap:20px;align-items:flex-start;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.asset-qr-box{flex-shrink:0;text-align:center}
+.asset-qr-box .qr-label{font-size:10px;color:var(--gray-mid);margin-top:6px}
+.asset-detail-info h2{font-size:18px;font-weight:700;color:var(--gray);margin-bottom:6px}
+.asset-detail-info .inv-num{font-family:monospace;font-size:12px;color:var(--blue);background:var(--blue-light);padding:3px 8px;border-radius:4px;display:inline-block;margin-bottom:8px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.detail-item label{font-size:10px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.4px;font-weight:600;display:block;margin-bottom:2px}
+.detail-item span{font-size:14px;color:var(--gray);font-weight:500}
+/* QR PRINT VIEW */
+#printView{display:none}
+.qr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.qr-card{border:1.5px solid #ccc;border-radius:8px;padding:14px;text-align:center;page-break-inside:avoid}
+.qr-card .qr-codigo{font-size:10px;font-family:monospace;color:#555;margin-bottom:4px;word-break:break-all}
+.qr-card .qr-desc{font-size:10px;font-weight:600;color:#222;margin-top:6px;line-height:1.3}
+.qr-card .qr-inv{font-size:8px;color:#888;margin-top:2px;font-family:monospace}
+@media print{
+  body > *:not(#printView){display:none!important}
+  #printView{display:block!important;background:#fff}
+  #printQRGrid{display:block!important}
+  .qr-print-page{break-after:page;page-break-after:always}
+  .qr-print-page:last-child{break-after:auto;page-break-after:auto}
+  #printQRGrid table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  #printQRGrid td{border:1px solid #ccc;padding:10px 8px;text-align:center;vertical-align:top;width:33.333%;box-sizing:border-box}
+  #printQRGrid td canvas{width:110px!important;height:110px!important;margin:0 auto}
+  #printQRGrid .qr-desc-print{font-size:8.5pt;line-height:1.2;color:#000;font-weight:600;word-break:break-all}
+  #printQRGrid .qr-inv-print{font-size:7pt;color:#555;font-family:monospace;margin-top:2px}
+  #printQRGrid .qr-resguard-print{font-size:7.5pt;color:#333;margin-top:2px}
+  #printQRGrid tr{page-break-inside:avoid;break-inside:avoid}
+  @page{size:letter portrait;margin:10mm}
+}
+/* MARCA DAVKARIX (esquina) */
+.corner-badge{position:fixed;right:14px;bottom:12px;z-index:90;display:flex;align-items:center;gap:7px;background:#fff;padding:6px 12px 6px 7px;border-radius:12px;border:1px solid var(--border);box-shadow:0 4px 18px -4px rgba(15,35,55,.25);pointer-events:none}
+.cb-dk{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--blue-mid);color:var(--blue-mid);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:900;letter-spacing:-1px}
+.cb-text{font-size:11px;font-weight:700;color:var(--gray)}
+/* LEXI */
+.lexi-bubble{position:fixed;right:18px;bottom:62px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#15803d,#0d9488);display:none;align-items:center;justify-content:center;font-size:23px;cursor:grab;box-shadow:0 8px 24px -6px rgba(0,0,0,.4);z-index:95;user-select:none;touch-action:none}
+.lexi-bubble::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(13,148,136,.45);animation:lexiPulse 2.2s ease-out infinite;pointer-events:none}
+@keyframes lexiPulse{0%{transform:scale(.9);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+.lexi-window{position:fixed;right:20px;bottom:128px;width:390px;max-width:92vw;height:min(600px,72vh);background:#fff;border-radius:20px;box-shadow:0 24px 64px -14px rgba(15,35,55,.4),0 0 0 1px rgba(15,35,55,.06);z-index:150;display:none;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(16px) scale(.97);transition:opacity .18s ease,transform .18s ease}
+.lexi-window.open{display:flex;opacity:1;transform:none}
+.lw-head{background:linear-gradient(135deg,#15803d,#0d9488);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex:none}
+.lw-left{display:flex;align-items:center;gap:10px;min-width:0}
+.lw-avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.lw-title{font-weight:800;font-size:15px;line-height:1.25}
+.lw-sub{font-size:11px;opacity:.85}
+.lw-acts{display:flex;gap:4px}
+.lw-ib{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);border:none;color:#fff;font-size:13px;cursor:pointer}
+.lw-ib:hover{background:rgba(255,255,255,.32)}
+.lw-body{flex:1;overflow-y:auto;padding:14px;background:#f7faf8}
+.lw-chat{display:flex;flex-direction:column;gap:10px}
+.lw-msg{max-width:86%;padding:10px 13px;font-size:13px;line-height:1.45;border-radius:14px;white-space:pre-wrap;animation:lwIn .18s ease}
+@keyframes lwIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.lw-bot{align-self:flex-start;background:#fff;color:var(--gray);border:1px solid var(--border);border-radius:14px 14px 14px 4px}
+.lw-user{align-self:flex-end;background:linear-gradient(135deg,#15803d,#0ea968);color:#fff;border-radius:14px 14px 4px 14px}
+.lw-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lw-chip{border:1px solid var(--border);background:#fff;color:var(--blue);border-radius:16px;padding:6px 11px;font-size:12px;cursor:pointer}
+.lw-chip:hover{background:var(--blue-light)}
+.lw-foot{flex:none;display:flex;gap:8px;align-items:center;padding:12px 14px;border-top:1px solid var(--border);background:#fff}
+.lw-foot input{flex:1;border:1px solid var(--border);border-radius:20px;padding:9px 15px;font-size:13px;font-family:inherit;outline:none}
+.lw-foot input:focus{border-color:#15803d}
+.lw-fb{width:36px;height:36px;border-radius:50%;background:#f1f5f2;border:1px solid var(--border);font-size:14px;cursor:pointer;flex:none}
+.lw-send{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#15803d,#0ea968);border:none;color:#fff;font-size:15px;cursor:pointer;flex:none}
+@media(max-width:480px){.lexi-window{right:8px;left:8px;bottom:8px;top:8px;width:auto;height:auto;max-width:none;border-radius:16px}}
+#lwFile{display:none;align-items:center;gap:8px;padding:8px 14px;background:#ecfdf5;border-top:1px solid var(--border);font-size:12px;color:var(--blue)}
+#lwFile button{margin-left:auto;border:none;background:none;cursor:pointer;font-size:14px;color:var(--gray-mid)}
+.lw-plan{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:12.5px;line-height:1.45;align-self:stretch}
+.lw-plan h4{font-size:13px;margin:8px 0 4px;color:var(--blue)}
+.lw-plan ul{margin:0 0 4px 16px;padding:0}
+.lw-plan .lw-act{display:flex;gap:8px;margin-top:10px}
+.lw-plan .lw-act button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12.5px;font-weight:600}
+.lw-plan .lw-act button.ok{background:#15803d;color:#fff;border-color:#15803d}
+/* SPLASH */
+@keyframes spin{to{transform:rotate(360deg)}}
+#authSplash{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;min-height:calc(100vh - 56px)}
+#authSplash .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:24px;background:#1e293b;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+/* ROLE BADGE */
+.role-badge{font-size:10px;padding:2px 8px;border-radius:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.role-admin{background:#fce7f3;color:#be185d}
+.role-editor{background:#dbeafe;color:#1d4ed8}
+.role-consulta{background:#d1fae5;color:#065f46}
+/* SCAN VIEW */
+.scan-card{background:var(--white);border-radius:12px;max-width:480px;margin:40px auto;padding:28px;box-shadow:0 4px 24px rgba(0,0,0,.1)}
+.scan-field{margin-bottom:16px}
+.scan-field label{font-size:11px;font-weight:600;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.scan-field .val{font-size:15px;font-weight:500;color:var(--gray)}
+.scan-field .val.mono{font-family:monospace;font-size:13px;color:var(--blue)}
+/* TABS */
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:20px}
+.tab-btn{padding:8px 18px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--gray-mid);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.tab-btn:hover:not(.active){color:var(--gray)}
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;align-items:center;gap:6px;padding:14px;border-top:1px solid var(--border)}
+.page-btn{padding:5px 10px;border:1px solid var(--border);border-radius:5px;background:var(--white);cursor:pointer;font-size:13px;transition:all .15s}
+.page-btn:hover{background:var(--blue-light);border-color:var(--blue)}
+.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-info{font-size:13px;color:var(--gray-mid);margin:0 6px}
+/* RESPONSIVE */
+@media(max-width:768px){
+  .grid-2,.grid-3,.detail-grid{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  table{font-size:12px}
+  thead th:nth-child(3),thead th:nth-child(4),thead th:nth-child(5){display:none}
+  tbody td:nth-child(3),tbody td:nth-child(4),tbody td:nth-child(5){display:none}
+  .asset-detail-header{flex-direction:column}
+  .toolbar{gap:8px}
+}
+</style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+  import { initializeAppCheck, getToken, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app-check.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-ai.js";
+  try{
+    const cfg = {
+      apiKey: "AIzaSyBkIzwu0ClTuZTl5KGsDlgQYKRWr3GdhSg",
+      authDomain: "inventario-cgacce.firebaseapp.com",
+      projectId: "inventario-cgacce",
+      storageBucket: "inventario-cgacce.firebasestorage.app",
+      messagingSenderId: "291366802478",
+      appId: "1:291366802478:web:527b2906efc00b5f54fbbf"
+    };
+    const appAI = initializeApp(cfg, "ai-logic-app");
+    const appCheckAI = initializeAppCheck(appAI, { provider: new ReCaptchaV3Provider("6LdWXYQtAAAAAEv8x5FxCPlX9z6QVgjnIE_DGhUb"), isTokenAutoRefreshEnabled: true });
+    const ai = getAI(appAI, { backend: new GoogleAIBackend() });
+    const MODELO = "gemini-3.1-flash-lite";
+    const rapido = getGenerativeModel(ai, { model: MODELO, generationConfig: { temperature: 0.2, maxOutputTokens: 900, thinkingConfig: { thinkingBudget: 0 } } });
+    const normal = getGenerativeModel(ai, { model: MODELO, generationConfig: { temperature: 0.2, maxOutputTokens: 900 } });
+    async function correr(m, prompt, onChunk){
+      const res = await m.generateContentStream(prompt);
+      let txt = '';
+      for await (const c of res.stream){ txt += c.text(); if(onChunk) onChunk(txt); }
+      return txt;
+    }
+    const minimo = getGenerativeModel(ai, { model: MODELO, generationConfig: { temperature: 0.2, maxOutputTokens: 900, thinkingConfig: { thinkingLevel: 'minimal' } } });
+    window.lexiDiagnostico = async function(log){
+      const med = async (nombre, fn) => { const t=performance.now(); try{ await fn(); log(`${nombre}: ${((performance.now()-t)/1000).toFixed(1)} s`); }catch(e){ log(`${nombre}: ERROR ${((e&&e.message)||e).toString().slice(0,120)} (${((performance.now()-t)/1000).toFixed(1)} s)`); } };
+      await med('1) App Check (token)', ()=>getToken(appCheckAI,false));
+      await med('2) IA modo rápido (thinkingBudget 0)', ()=>rapido.generateContent('Responde solo: OK'));
+      await med('3) IA modo normal', ()=>normal.generateContent('Responde solo: OK'));
+      await med('4) IA pensamiento mínimo', ()=>minimo.generateContent('Responde solo: OK'));
+      await med('5) IA rápido otra vez', ()=>rapido.generateContent('Responde solo: OK'));
+    };
+    const cfgExt = { temperature: 0, maxOutputTokens: 16000, responseMimeType: 'application/json' };
+    const extractor = getGenerativeModel(ai, { model: MODELO, generationConfig: { ...cfgExt, thinkingConfig: { thinkingBudget: 0 } } });
+    const extractor2 = getGenerativeModel(ai, { model: MODELO, generationConfig: cfgExt });
+    window.extraerConIA = async function(prompt, mime, b64){
+      const partes = [{ text: prompt }, { inlineData: { mimeType: mime, data: b64 } }];
+      try{ return (await extractor.generateContent(partes)).response.text(); }
+      catch(e){ console.warn('Extractor rápido falló, reintento normal', e); return (await extractor2.generateContent(partes)).response.text(); }
+    };
+    let usarRapido = true; window.lexiModo = 'rápido';
+    window.preguntarGemini = async function(prompt, onChunk){
+      if(usarRapido){
+        try{ return await correr(rapido, prompt, onChunk); }
+        catch(e){ console.warn('Modo rápido no disponible, uso modo normal', e); usarRapido = false; window.lexiModo = 'normal (falló rápido: '+((e&&e.message)||e).toString().slice(0,80)+')'; }
+      }
+      return await correr(normal, prompt, onChunk);
+    };
+  }catch(e){ console.error('No se pudo iniciar el asistente', e); window.lexiInitError = e; }
+</script>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header" style="padding:0 24px;height:auto;min-height:64px;flex-wrap:wrap">
+  <div class="header-logo" style="display:flex;align-items:center;gap:12px">
+    <img src="Captura%20de%20pantalla%202026-07-21%20130706.png" alt="INECC" style="height:44px;width:auto;background:#fff;border-radius:6px;padding:3px">
+    <div>
+      <div style="font-size:14px;font-weight:700;line-height:1.3">Coordinación General de Adaptación al Cambio Climático y Ecología</div>
+      <div style="font-size:11px;opacity:.75">Sistema de Control de Activos — RJJ09</div>
+    </div>
+  </div>
+  <div id="headerRight" style="display:flex;align-items:center;gap:10px">
+    <span id="userDisplay" style="font-size:12px;opacity:.8"></span>
+    <span id="roleBadgeHeader"></span>
+    <button class="btn btn-white btn-sm" onclick="logout()" id="logoutBtn" style="display:none">Cerrar sesión</button>
+  </div>
+</div>
+
+<!-- SPLASH: se muestra mientras Firebase restaura la sesión, evita el parpadeo del login -->
+<div id="authSplash">
+  <div class="spinner"></div>
+  <span style="font-size:13px;color:var(--gray-mid)">Cargando…</span>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none">
+  <video autoplay muted loop playsinline id="loginVideoBg">
+    <source src="login-bg.mp4?v=2" type="video/mp4">
+  </video>
+  <div id="loginOverlay"></div>
+  <div class="login-card">
+    <h2>Iniciar sesión</h2>
+    <p>Sistema de control de activos con códigos QR</p>
+    <div class="form-group">
+      <label>Usuario</label>
+      <input type="text" id="loginUser" placeholder="correo@ejemplo.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="container">
+    <!-- TABS -->
+    <div class="tabs" id="mainTabs">
+      <button class="tab-btn active" onclick="showTab('inventario')">📋 Inventario</button>
+      <button class="tab-btn" onclick="showTab('por-resguardatario')">👤 Por resguardatario</button>
+      <button class="tab-btn" onclick="showTab('qr-codes')" id="tabQR">🔲 Códigos QR</button>
+    </div>
+
+    <!-- INVENTARIO TAB -->
+    <div id="tab-inventario">
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">304</div>
+          <div class="stat-label">Total bienes</div>
+        </div>
+        <div class="stat-card teal">
+          <div class="stat-num" id="statResguardatarios">0</div>
+          <div class="stat-label">Resguardatarios</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-num" id="statFiltrados">304</div>
+          <div class="stat-label">Mostrando</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-num" id="statValor">$0</div>
+          <div class="stat-label">Valor total</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Buscar por descripción, inventario, serie, resguardatario..." oninput="applyFilters()">
+        </div>
+        <select id="filterResguard" onchange="applyFilters()">
+          <option value="">Todos los resguardatarios</option>
+        </select>
+        <button class="btn btn-teal" onclick="exportExcel()">📊 Excel</button>
+        <button class="btn btn-primary" onclick="exportPDF()">📄 PDF</button>
+        <button class="btn" style="background:#7c3aed;color:#fff" onclick="exportHTML()" title="Descarga el index.html actualizado para subir a Netlify">💾 Exportar HTML</button>
+        <button class="btn btn-white btn-sm" style="background:var(--blue-light);color:var(--blue);border:none" onclick="openAddModal()" id="addBtnMain">➕ Nuevo bien</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <strong style="font-size:14px;color:var(--gray)">Bienes activos</strong>
+          <span id="pageInfo2">Página 1</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Descripción</th>
+                <th>No. inventario</th>
+                <th>Serie</th>
+                <th>Resguardatario</th>
+                <th>Marca / Modelo</th>
+                <th style="text-align:right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="assetsTable"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+    <!-- POR RESGUARDATARIO TAB -->
+    <div id="tab-por-resguardatario" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchResguard" placeholder="Buscar resguardatario..." oninput="renderResguardatarios()">
+        </div>
+      </div>
+      <div id="resguardatarioList"></div>
+    </div>
+
+    <!-- QR CODES TAB -->
+    <div id="tab-qr-codes" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchQR" placeholder="Buscar bien para QR..." oninput="renderQRGrid()">
+        </div>
+        <select id="filterResguardQR" onchange="renderQRGrid()">
+          <option value="">Todos los resguardatarios</option>
+        </select>
+        <button class="btn btn-primary" onclick="printAllQR()">🖨️ Imprimir todos los QR</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <strong style="font-size:14px">Vista previa de códigos QR</strong>
+          <span id="qrCount">304 códigos</span>
+        </div>
+        <div style="padding:20px">
+          <div id="qrGridContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN VIEW (URL: ?scan=INVENTARIO) -->
+<div id="scanView" style="display:none">
+  <div class="container">
+    <div class="scan-card">
+      <div id="scanContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Nuevo bien</h3>
+      <button class="close-btn" onclick="closeModal('addModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Número de inventario *</label>
+          <input type="text" id="f_inventario" placeholder="RJJ09I...">
+        </div>
+        <div class="form-group">
+          <label>N° de bien</label>
+          <input type="text" id="f_numero" placeholder="00001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descripción *</label>
+        <input type="text" id="f_descripcion" placeholder="Nombre del bien">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Código resguardatario</label>
+          <input type="text" id="f_codResguard" placeholder="7100001">
+        </div>
+        <div class="form-group">
+          <label>Nombre resguardatario</label>
+          <input type="text" id="f_nombreResguard" placeholder="Nombre completo">
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" id="f_marca" placeholder="HP">
+        </div>
+        <div class="form-group">
+          <label>Modelo</label>
+          <input type="text" id="f_modelo" placeholder="LaserJet">
+        </div>
+        <div class="form-group">
+          <label>N° de serie</label>
+          <input type="text" id="f_serie" placeholder="SN001">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Empleado responsable</label>
+          <input type="text" id="f_empleado" placeholder="7100001">
+        </div>
+        <div class="form-group">
+          <label>Valor de adquisición</label>
+          <input type="number" id="f_valor" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAsset()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Ficha del bien</h3>
+      <button class="close-btn" onclick="closeModal('detailModal')">×</button>
+    </div>
+    <div class="modal-body" id="detailContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('detailModal')">Cerrar</button>
+      <button class="btn btn-primary" onclick="editCurrentAsset()" id="editFromDetail">✏️ Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEXI -->
+<div id="lexiBubble" class="lexi-bubble" title="LEXI">💬</div>
+<div id="asistente" class="lexi-window">
+  <div class="lw-head">
+    <div class="lw-left"><div class="lw-avatar">💬</div><div><div class="lw-title">LEXI</div><div class="lw-sub">Asistente del inventario de activos</div></div></div>
+    <div class="lw-acts">
+      <button class="lw-ib" id="btnVoz" onclick="lexiToggleVoz()" title="Voz">🔇</button>
+      <button class="lw-ib" onclick="lexiLimpiar()" title="Limpiar chat">🧹</button>
+      <button class="lw-ib" onclick="lexiToggle(false)" title="Cerrar">✕</button>
+    </div>
+  </div>
+  <div class="lw-body" id="lwBody">
+    <div class="lw-chat" id="chatBox">
+      <div class="lw-msg lw-bot">Hola 👋 Soy LEXI. Puedo buscar bienes, contarlos, ver a quién están asignados, y también agregar, editar, reasignar o eliminar bienes si me lo pides.</div>
+    </div>
+    <div class="lw-chips" id="lwChips">
+      <button class="lw-chip" onclick="lexiEjemplo(this)">¿Cuántos bienes hay en total?</button>
+      <button class="lw-chip" onclick="lexiEjemplo(this)">¿Qué laptops tenemos y de quién son?</button>
+      <button class="lw-chip" onclick="lexiEjemplo(this)">Muéstrame los bienes de un resguardatario</button>
+    </div>
+  </div>
+  <div id="lwFile"><span id="lwFileName"></span><button onclick="lexiQuitarArchivo()" title="Quitar">✕</button></div>
+  <input type="file" id="lwFileInput" accept="image/*,application/pdf" style="display:none" onchange="lexiElegirArchivo(this)">
+  <div class="lw-foot">
+    <button class="lw-fb" onclick="document.getElementById('lwFileInput').click()" title="Adjuntar PDF o imagen">📎</button>
+    <input id="chatInput" placeholder="Pregunta, o adjunta un PDF/foto con 📎..." onkeydown="if(event.key==='Enter')preguntarIA()">
+    <button class="lw-fb" id="btnMic" onclick="lexiMic()" title="Hablar">🎙️</button>
+    <button class="lw-send" onclick="preguntarIA()" title="Enviar">➤</button>
+  </div>
+</div>
+
+<!-- MARCA -->
+<div class="corner-badge"><span class="cb-dk">DK</span><span class="cb-text">By Davkarix</span></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PRINT VIEW -->
+<div id="printView">
+  <h2 style="text-align:center;margin-bottom:16px;font-family:sans-serif;font-size:16px">Códigos QR — Inventario de Activos RJJ09</h2>
+  <div class="qr-grid" id="printQRGrid"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+// USERS con contraseñas en texto plano eliminado: la autenticación real
+// la maneja Firebase Auth (auth.signInWithEmailAndPassword) y el rol vive
+// en Firestore (colección 'usuarios').
+
+let currentUser = null;
+let currentRole = null;
+let editingId   = null;
+let currentPage = 1;
+const PAGE_SIZE  = 25;
+let filteredData = [];
+
+// Raw assets from xlsx
+let ASSETS = [];
+// ==================== INIT ====================
+function renderAfterLoad(){
+  // Populate resguardatario filters
+  const resguards = getUniqueResguardatarios();
+  ['filterResguard','filterResguardQR'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.querySelectorAll('option:not(:first-child)').forEach(o=>o.remove());
+    resguards.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r; opt.text = r;
+      el.appendChild(opt);
+    });
+  });
+
+  applyFilters();
+  renderResguardatarios();
+  updateStats();
+}
+
+// Escapa texto antes de inyectarlo en innerHTML (previene XSS almacenado/reflejado).
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function cargarDatos(rol){
+  try{
+    const docId = (rol === 'admin' || rol === 'editor') ? 'data' : 'data_publico';
+    const doc = await db.collection('inventario').doc(docId).get();
+    if(doc.exists && doc.data().assets && doc.data().assets.length){
+      ASSETS = doc.data().assets;
+    } else if(docId === 'data'){
+      await db.collection('inventario').doc('data').set({assets: ASSETS});
+    }
+  } catch(e){
+    console.error('Error cargando de Firestore, usando datos locales', e);
+    const saved = localStorage.getItem('activos_rjj09');
+    if(saved) ASSETS = JSON.parse(saved);
+  }
+}
+// Reacciona cuando Firebase restaura o pierde la sesión → la sesión persiste al
+// recargar. Solo un admin autenticado carga y ve los datos.
+auth.onAuthStateChanged(async (user) => {
+  const scanInv = new URLSearchParams(window.location.search).get('scan');
+  if(!user){ mostrarLogin(); return; }
+  try{
+    const roleDoc = await db.collection('usuarios').doc(user.uid).get();
+    currentRole = roleDoc.exists ? roleDoc.data().role : 'consulta';
+  } catch(e){ currentRole = 'consulta'; }
+  currentUser = user.email;
+
+  if(currentRole !== 'admin'){
+    mostrarLogin();
+    showToast('Solo un administrador puede ver el inventario', 'error');
+    return;
+  }
+ await cargarDatos(currentRole);
+  if(scanInv){ showScanView(scanInv); return; }
+  entrarApp();
+  renderAfterLoad();
+});
+
+function mostrarLogin(){
+  currentUser = null; currentRole = null;
+  document.getElementById('authSplash').style.display = 'none';
+  document.getElementById('scanView').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+  const lb=document.getElementById('lexiBubble'); if(lb) lb.style.display='none';
+  const lw=document.getElementById('asistente'); if(lw) lw.classList.remove('open');
+}
+
+function entrarApp(){
+  document.getElementById('authSplash').style.display = 'none';
+  document.getElementById('scanView').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = 'inline-flex';
+  document.getElementById('userDisplay').textContent = currentUser;
+  const roleLabels = {admin:'Administrador',editor:'Editor',consulta:'Solo lectura'};
+  const roleColors = {admin:'role-admin',editor:'role-editor',consulta:'role-consulta'};
+  document.getElementById('roleBadgeHeader').innerHTML =
+    `<span class="role-badge ${roleColors[currentRole]}">${roleLabels[currentRole]}</span>`;
+  if(currentRole === 'consulta') document.getElementById('addBtnMain').style.display = 'none';
+  aplicarVisibilidadQR();
+  const lb=document.getElementById('lexiBubble'); if(lb) lb.style.display='flex';
+}
+
+// Solo admin ve la pestaña de códigos QR.
+function aplicarVisibilidadQR(){
+  const tab = document.getElementById('tabQR');
+  if(tab) tab.style.display = currentRole === 'admin' ? 'inline-flex' : 'none';
+}
+
+async function saveToStorage(){
+  try{
+    await db.collection('inventario').doc('data').set({assets: ASSETS});
+    const publico = ASSETS.map(a => {
+      const copia = {...a};
+      delete copia.empleadoResponsable;
+      delete copia.valorAdquisicion;
+      return copia;
+    });
+    await db.collection('inventario').doc('data_publico').set({assets: publico});
+    localStorage.removeItem('activos_rjj09');
+  } catch(e){
+    console.error('Error guardando en Firestore', e);
+    localStorage.setItem('activos_rjj09', JSON.stringify(ASSETS));
+    showToast('Sin conexión: el cambio solo se guardó en este dispositivo', 'error');
+  }
+}
+const EXCEPCIONES_NOMBRE = {
+  'GEMMA ABISAY  ORTIZ': 'GEMMA ABISAY',
+  'JORGE  DAVID MARTINEZ': 'JORGE DAVID',
+  'JUAN  DAVID  TORRES': 'JUAN DAVID',
+  'VICTOR OMAR  MINERO': 'VICTOR OMAR',
+  'XIMENA SARAI  POSADAS': 'XIMENA SARAI',
+  'CELIA  ELIZABETH  PIGUERON': 'CELIA ELIZABETH'
+};
+
+function primerNombre(nombreCompleto){
+  const limpio = nombreCompleto.trim();
+  if(EXCEPCIONES_NOMBRE[limpio]) return EXCEPCIONES_NOMBRE[limpio];
+  const partes = limpio.split(/\s+/).filter(p => p.length > 0);
+  if(partes.length <= 2) return partes[0] || '';
+  return partes.slice(0, partes.length - 2).join(' ');
+}
+function getUniqueResguardatarios(){
+  const names = [...new Set(ASSETS.map(a => a.nombreResguardatario.trim()))].sort();
+  return names.filter(n => n.length > 0);
+}
+
+// ==================== AUTH ====================
+async function doLogin(){
+  const email = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  try{
+    await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged se encarga de cargar datos y mostrar la app.
+  } catch(e){
+    showToast('Usuario o contraseña incorrectos', 'error');
+  }
+}
+
+function logout(){
+  auth.signOut();
+  localStorage.removeItem('activos_rjj09');
+  mostrarLogin();
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+// ==================== TABS ====================
+function showTab(tab){
+  ['inventario','por-resguardatario','qr-codes'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active', i === ['inventario','por-resguardatario','qr-codes'].indexOf(tab));
+  });
+  if(tab === 'qr-codes') renderQRGrid();
+  if(tab === 'por-resguardatario') renderResguardatarios();
+}
+
+// ==================== FILTERS + TABLE ====================
+function applyFilters(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguard').value||'').toLowerCase();
+  
+  filteredData = ASSETS.filter(a => {
+    const matchQ = !q || 
+      (a.descripcion||'').toLowerCase().includes(q) ||
+      (a.inventario||'').toLowerCase().includes(q) ||
+      (a.serie||'').toLowerCase().includes(q) ||
+      (a.nombreResguardatario||'').toLowerCase().includes(q) ||
+      (a.numero||'').toLowerCase().includes(q) ||
+      (a.marca||'').toLowerCase().includes(q);
+    const matchR = !resguard || (a.nombreResguardatario||'').toLowerCase().includes(resguard);
+    return matchQ && matchR;
+  });
+  
+  currentPage = 1;
+  renderTable();
+  updateStats();
+}
+
+function renderTable(){
+  const tbody = document.getElementById('assetsTable');
+  const start = (currentPage-1) * PAGE_SIZE;
+  const page = filteredData.slice(start, start + PAGE_SIZE);
+  
+  tbody.innerHTML = page.map(a => `
+    <tr>
+      <td style="font-weight:600;color:var(--blue)">${esc(a.numero)}</td>
+      <td class="desc-cell">
+        <span class="desc-text">${esc(a.descripcion)}</span>
+        <span class="desc-sub">${esc(a.marca)} ${a.modelo !== 'SM' ? '· '+esc(a.modelo) : ''}</span>
+      </td>
+      <td><span class="inv-badge">${esc(a.inventario.substring(0,22))}</span></td>
+      <td style="font-family:monospace;font-size:12px">${a.serie !== 'SN' ? esc(a.serie) : '—'}</td>
+      <td>
+        <div class="resguard-name">${esc(a.nombreResguardatario.trim())}</div>
+        <div style="font-size:11px;color:var(--gray-mid)">${esc(a.codResguardatario)}</div>
+      </td>
+      <td style="font-size:12px">${esc(a.marca)}<br><span style="color:var(--gray-mid)">${esc(a.modelo)}</span></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-ghost btn-sm" onclick="showDetail(${a.id})" title="Ver ficha">👁</button>
+          ${canEdit() ? `<button class="btn btn-ghost btn-sm" onclick="openEditModal(${a.id})" title="Editar">✏️</button>` : ''}
+          ${currentRole === 'admin' ? `<button class="btn btn-ghost btn-sm" onclick="deleteAsset(${a.id})" title="Eliminar" style="color:var(--red)">🗑</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  
+  renderPagination();
+}
+
+function renderPagination(){
+  const total = filteredData.length;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pag = document.getElementById('pagination');
+  const pi = document.getElementById('pageInfo2');
+  if(pi) pi.textContent = `${total} bienes`;
+  
+  if(pages <= 1){ pag.innerHTML = ''; return; }
+  
+  let html = '';
+  if(currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1})">← Ant</button>`;
+  
+  const start = Math.max(1, currentPage-2);
+  const end   = Math.min(pages, currentPage+2);
+  for(let i=start;i<=end;i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  
+  if(currentPage < pages) html += `<button class="page-btn" onclick="goPage(${currentPage+1})">Sig →</button>`;
+  html += `<span class="page-info">Página ${currentPage} de ${pages}</span>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p){ currentPage=p; renderTable(); window.scrollTo(0,0); }
+
+function updateStats(){
+  const total  = ASSETS.length;
+  const resgs  = new Set(ASSETS.map(a=>a.nombreResguardatario.trim())).size;
+  const valor  = ASSETS.reduce((s,a)=>s+(a.valorAdquisicion||0),0);
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statResguardatarios').textContent = resgs;
+  document.getElementById('statFiltrados').textContent = filteredData.length || total;
+  document.getElementById('statValor').textContent = '$'+Math.round(valor).toLocaleString('es-MX');
+}
+
+// ==================== RESGUARDATARIOS VIEW ====================
+function renderResguardatarios(){
+  const q = (document.getElementById('searchResguard').value||'').toLowerCase();
+  const byPerson = {};
+  ASSETS.forEach(a=>{
+    const name = a.nombreResguardatario.trim();
+    if(!byPerson[name]) byPerson[name] = [];
+    byPerson[name].push(a);
+  });
+  
+  const sorted = Object.keys(byPerson).sort().filter(n => !q || n.toLowerCase().includes(q));
+  
+  const container = document.getElementById('resguardatarioList');
+  container.innerHTML = sorted.map(name => {
+    const items = byPerson[name];
+    const valor = items.reduce((s,a)=>s+(a.valorAdquisicion||0),0);
+    return `
+      <div style="background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden">
+        <div style="background:var(--blue-light);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleGroup(this)">
+          <div>
+            <strong style="font-size:15px;color:var(--blue)">${esc(name)}</strong>
+            <span style="font-size:12px;color:var(--gray-mid);margin-left:8px">${esc(items[0].codResguardatario)}</span>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center">
+            <span style="font-size:12px;color:var(--gray-mid)">${items.length} bienes</span>
+            ${valor > 0 ? `<span style="font-size:12px;font-weight:600;color:var(--teal)">$${Math.round(valor).toLocaleString('es-MX')}</span>` : ''}
+            <span style="color:var(--gray-mid)">▼</span>
+          </div>
+        </div>
+        <div class="group-items" style="padding:0 16px 8px">
+          ${items.map(a => `
+            <div style="padding:8px 0;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-weight:600;color:var(--blue);font-size:12px;margin-right:8px">${esc(a.numero)}</span>
+                <span style="font-size:13px">${esc(a.descripcion)}</span>
+                <div style="font-size:11px;color:var(--gray-mid);margin-top:2px;font-family:monospace">${esc(a.inventario)}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="showDetail(${a.id})">👁 Ver</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+// ==================== QR GRID ====================
+function renderQRGrid(){
+  const q = (document.getElementById('searchQR').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguardQR').value||'').toLowerCase();
+  
+  const data = ASSETS.filter(a => {
+    const matchQ = !q || a.descripcion.toLowerCase().includes(q) || a.inventario.toLowerCase().includes(q) || a.numero.includes(q);
+    const matchR = !resguard || a.nombreResguardatario.toLowerCase().includes(resguard);
+    return matchQ && matchR;
+  }).slice(0, 60); // Show max 60 in preview
+  
+  document.getElementById('qrCount').textContent = `${data.length} códigos (vista previa)`;
+  
+  const container = document.getElementById('qrGridContainer');
+  container.innerHTML = '';
+  
+  data.forEach(a => {
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;background:var(--white)';
+    
+    const qrDiv = document.createElement('div');
+    qrDiv.id = 'qr_'+a.id;
+    card.appendChild(qrDiv);
+    
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:9px;font-family:monospace;color:var(--gray-mid);margin-top:4px;word-break:break-all';
+    label.textContent = a.inventario;
+    card.appendChild(label);
+    
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:10px;font-weight:600;color:var(--gray);margin-top:4px;line-height:1.2';
+    desc.textContent = a.descripcion.substring(0,40) + (a.descripcion.length>40?'…':'');
+    card.appendChild(desc);
+    
+    const num = document.createElement('div');
+    num.style.cssText = 'font-size:9px;color:var(--blue);font-weight:700;margin-top:2px';
+    num.textContent = 'N° '+a.numero;
+    card.appendChild(num);
+    
+    container.appendChild(card);
+    
+    setTimeout(() => {
+      try {
+        new QRCode(qrDiv, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#1a56db', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+    }, 50);
+  });
+}
+
+// ==================== DETAIL VIEW ====================
+let detailAssetId = null;
+
+function showDetail(id){
+  const a = ASSETS.find(x => x.id === id);
+  if(!a) return;
+  detailAssetId = id;
+  
+  const qrUrl = window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario);
+  
+  document.getElementById('detailContent').innerHTML = `
+    <div class="asset-detail-header">
+      <div class="asset-detail-info" style="flex:1">
+        <div class="inv-num">${esc(a.inventario)}</div>
+        <h2>${esc(a.descripcion)}</h2>
+        <div style="font-size:13px;color:var(--gray-mid);margin-top:4px">N° de bien: <strong>${esc(a.numero)}</strong></div>
+      </div>
+      <div class="asset-qr-box">
+        <div id="detail_qr" style="display:inline-block"></div>
+        <div class="qr-label">Escanear para ver ficha</div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <label>Resguardatario</label>
+        <span>${esc(a.nombreResguardatario.trim())}</span>
+      </div>
+      <div class="detail-item">
+        <label>Código resguardatario</label>
+        <span style="font-family:monospace">${esc(a.codResguardatario)}</span>
+      </div>
+      <div class="detail-item">
+        <label>Empleado responsable</label>
+        <span>${esc(a.empleadoResponsable || '—')}</span>
+      </div>
+      <div class="detail-item">
+        <label>N° de serie</label>
+        <span style="font-family:monospace">${a.serie !== 'SN' ? esc(a.serie) : 'Sin número'}</span>
+      </div>
+      <div class="detail-item">
+        <label>Marca</label>
+        <span>${esc(a.marca)}</span>
+      </div>
+      <div class="detail-item">
+        <label>Modelo</label>
+        <span>${esc(a.modelo)}</span>
+      </div>
+      <div class="detail-item">
+        <label>Almacén</label>
+        <span>${esc(a.almacen || '—')}</span>
+      </div>
+      <div class="detail-item">
+        <label>Valor de adquisición</label>
+        <span style="font-weight:700;color:var(--teal)">$${(a.valorAdquisicion||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <label style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600">URL del código QR (estático)</label>
+      <div style="font-family:monospace;font-size:11px;color:var(--blue);background:var(--blue-light);padding:8px;border-radius:4px;margin-top:4px;word-break:break-all">${esc(qrUrl)}</div>
+    </div>
+  `;
+  
+  openModal('detailModal');
+  
+  setTimeout(() => {
+    try {
+      new QRCode(document.getElementById('detail_qr'), {
+        text: qrUrl,
+        width: 120, height: 120,
+        colorDark:'#1a56db', colorLight:'#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e){}
+  }, 100);
+  
+  document.getElementById('editFromDetail').style.display = canEdit() ? 'inline-flex' : 'none';
+}
+
+function editCurrentAsset(){
+  closeModal('detailModal');
+  openEditModal(detailAssetId);
+}
+
+// ==================== ADD/EDIT MODAL ====================
+function canEdit(){ return currentRole === 'admin' || currentRole === 'editor'; }
+
+function openAddModal(){
+  if(!canEdit()){ showToast('Sin permisos de edición', 'error'); return; }
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Agregar nuevo bien';
+  ['f_inventario','f_numero','f_descripcion','f_codResguard','f_nombreResguard','f_marca','f_modelo','f_serie','f_empleado'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_valor').value = '0';
+  openModal('addModal');
+}
+
+function openEditModal(id){
+  if(!canEdit()){ showToast('Sin permisos de edición', 'error'); return; }
+  const a = ASSETS.find(x => x.id === id);
+  if(!a) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar bien — ' + a.numero;
+  document.getElementById('f_inventario').value = a.inventario;
+  document.getElementById('f_numero').value = a.numero;
+  document.getElementById('f_descripcion').value = a.descripcion;
+  document.getElementById('f_codResguard').value = a.codResguardatario;
+  document.getElementById('f_nombreResguard').value = a.nombreResguardatario;
+  document.getElementById('f_marca').value = a.marca;
+  document.getElementById('f_modelo').value = a.modelo;
+  document.getElementById('f_serie').value = a.serie;
+  document.getElementById('f_empleado').value = a.empleadoResponsable;
+  document.getElementById('f_valor').value = a.valorAdquisicion;
+  openModal('addModal');
+}
+
+function saveAsset(){
+  const inventario = document.getElementById('f_inventario').value.trim();
+  const descripcion = document.getElementById('f_descripcion').value.trim();
+  if(!inventario || !descripcion){ showToast('Complete los campos obligatorios', 'error'); return; }
+  
+  const data = {
+    inventario,
+    numero: document.getElementById('f_numero').value.trim(),
+    descripcion,
+    codResguardatario: document.getElementById('f_codResguard').value.trim(),
+    nombreResguardatario: document.getElementById('f_nombreResguard').value.trim(),
+    marca: document.getElementById('f_marca').value.trim() || 'SM',
+    modelo: document.getElementById('f_modelo').value.trim() || 'SM',
+    serie: document.getElementById('f_serie').value.trim() || 'SN',
+    empleadoResponsable: document.getElementById('f_empleado').value.trim(),
+    valorAdquisicion: parseFloat(document.getElementById('f_valor').value) || 0,
+    almacen: '400'
+  };
+  
+  if(editingId){
+    const idx = ASSETS.findIndex(x => x.id === editingId);
+    if(idx >= 0) ASSETS[idx] = {...ASSETS[idx], ...data};
+    showToast('Bien actualizado', 'success');
+  } else {
+    const newId = Math.max(...ASSETS.map(a=>a.id)) + 1;
+    ASSETS.push({id: newId, ...data});
+    showToast('Bien agregado', 'success');
+  }
+  
+  saveToStorage();
+  closeModal('addModal');
+  applyFilters();
+  updateStats();
+  
+  // Update resguard filter options
+  const resguards = getUniqueResguardatarios();
+  ['filterResguard','filterResguardQR'].forEach(fid => {
+    const el = document.getElementById(fid);
+    if(!el) return;
+    const current = el.value;
+    while(el.options.length > 1) el.remove(1);
+    resguards.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.text = r;
+      el.appendChild(opt);
+    });
+    el.value = current;
+  });
+}
+
+function deleteAsset(id){
+  if(currentRole !== 'admin'){ showToast('Solo el administrador puede eliminar', 'error'); return; }
+  if(!confirm('¿Eliminar este bien del inventario? Esta acción no se puede deshacer.')) return;
+  ASSETS = ASSETS.filter(a => a.id !== id);
+  saveToStorage();
+  applyFilters();
+  updateStats();
+  showToast('Bien eliminado', 'success');
+}
+
+// ==================== SCAN VIEW ====================
+function showScanView(inventario){
+  document.getElementById('authSplash').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('scanView').style.display = 'block';
+
+  // Solo un admin autenticado puede ver los datos del QR.
+  if(!auth.currentUser || currentRole !== 'admin'){
+    document.getElementById('scanContent').innerHTML =
+      '<p style="text-align:center;padding:20px">Inicia sesión como administrador para ver este bien.</p>';
+    return;
+  }
+
+  const asset = ASSETS.find(a => a.inventario === inventario);
+
+  if(!asset){
+    document.getElementById('scanContent').innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:48px;margin-bottom:16px">❓</div>
+        <h2 style="color:var(--red);margin-bottom:8px">Bien no encontrado</h2>
+        <p style="color:var(--gray-mid);font-size:13px">No se encontró ningún bien con el inventario: <strong>${esc(inventario)}</strong></p>
+        <a href="${esc(window.location.pathname)}" class="btn btn-primary" style="margin-top:16px;text-decoration:none">← Ir al sistema</a>
+      </div>`;
+    return;
+  }
+  
+  document.getElementById('scanContent').innerHTML = `
+    <div style="text-align:center;padding:8px 0 4px">
+      <div style="font-size:11px;color:var(--gray-mid);letter-spacing:.5px;text-transform:uppercase">Control de Activos — RJJ09</div>
+    </div>
+    <div style="background:var(--blue);border-radius:10px;padding:18px;margin:12px 0;text-align:center">
+      <div style="font-size:11px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">👤 Actualmente en resguardo de</div>
+      <div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2">${esc(primerNombre(asset.nombreResguardatario))}</div>
+    </div>
+    <div style="background:var(--gray-light);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📦 Bien</div>
+      <div style="font-size:17px;font-weight:700;color:var(--gray);line-height:1.3">${esc(asset.descripcion)}</div>
+      <div style="font-size:12px;color:var(--blue);font-weight:600;margin-top:4px">N° ${esc(asset.numero)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">Marca</div>
+        <div style="font-size:14px;font-weight:600">${esc(asset.marca)}</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">Modelo</div>
+        <div style="font-size:14px;font-weight:600">${esc(asset.modelo)}</div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;grid-column:1 / -1">
+        <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:3px">N° Serie</div>
+        <div style="font-size:13px;font-family:monospace;font-weight:600">${asset.serie !== 'SN' ? esc(asset.serie) : '—'}</div>
+      </div>
+    </div>
+    <div style="background:var(--blue-light);border-radius:8px;padding:10px 12px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--gray-mid);text-transform:uppercase;font-weight:600;margin-bottom:2px">N° Inventario</div>
+      <div style="font-family:monospace;font-size:12px;font-weight:700;color:var(--blue);word-break:break-all">${esc(asset.inventario)}</div>
+    </div>
+    <div style="text-align:center;padding-top:10px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;color:var(--gray-mid)">Consultado: ${new Date().toLocaleString('es-MX')}</div>
+      <a href="${esc(window.location.pathname)}" style="display:inline-block;margin-top:8px;font-size:12px;color:var(--blue);text-decoration:none">← Sistema completo</a>
+    </div>
+  `;
+}
+
+// ==================== EXPORT HTML ====================
+function exportHTML(){
+  // Build a data-only JSON file instead
+  const data = {assets: ASSETS, exported: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'activos_rjj09_backup.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Datos exportados — manda este archivo para actualizar el sitio', 'success');
+}
+
+// ==================== EXPORT ====================
+function exportExcel(){
+  const data = filteredData.map(a => ({
+    'N°': a.numero,
+    'Descripción': a.descripcion,
+    'No. Inventario': a.inventario,
+    'Cód. Resguardatario': a.codResguardatario,
+    'Nombre Resguardatario': a.nombreResguardatario.trim(),
+    'Empleado Responsable': a.empleadoResponsable,
+    'Marca': a.marca,
+    'Modelo': a.modelo,
+    'N° Serie': a.serie,
+    'Valor Adquisición': a.valorAdquisicion,
+    'Almacén': a.almacen
+  }));
+  
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:8},{wch:40},{wch:28},{wch:16},{wch:35},{wch:16},{wch:20},{wch:20},{wch:18},{wch:16},{wch:8}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Activos');
+  XLSX.writeFile(wb, 'Inventario_Activos_RJJ09_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel exportado', 'success');
+}
+
+function exportPDF(){
+  const title = 'Inventario de Activos Fijos — RJJ09\n' + new Date().toLocaleString('es-MX');
+  const rows = filteredData.map(a => [
+    esc(a.numero), esc(a.descripcion.substring(0,40)), esc(a.inventario.substring(0,24)),
+    esc(a.nombreResguardatario.trim().substring(0,30)), esc(a.serie), '$'+Math.round(a.valorAdquisicion).toLocaleString()
+  ]);
+  
+  const headers = ['N°','Descripción','Inventario','Resguardatario','Serie','Valor'];
+  const colW = [50, 250, 160, 180, 100, 70];
+  
+  // Simple print-based PDF
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Reporte Activos</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:10px;padding:20px}
+    h2{font-size:14px;margin-bottom:4px;color:#1a56db}
+    p{font-size:10px;color:#666;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1a56db;color:#fff;padding:5px 7px;text-align:left;font-size:9px}
+    td{padding:4px 7px;border-bottom:1px solid #eee;font-size:9px}
+    tr:nth-child(even){background:#f8fafc}
+    @media print{@page{margin:10mm}}
+  </style></head><body>
+  <h2>Inventario de Activos Fijos — RJJ09</h2>
+  <p>Generado: ${new Date().toLocaleString('es-MX')} | Total: ${filteredData.length} bienes</p>
+  <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></body></html>`);
+  win.document.close();
+  setTimeout(()=>{ win.print(); }, 500);
+  showToast('Abriendo PDF para imprimir...', 'success');
+}
+
+// ==================== PRINT ALL QR ====================
+function printAllQR(){
+  const q = (document.getElementById('searchQR').value||'').toLowerCase();
+  const resguardFiltro = (document.getElementById('filterResguardQR').value||'').toLowerCase();
+  const data = ASSETS.filter(a=>{
+    const mq = !q || a.descripcion.toLowerCase().includes(q) || a.inventario.toLowerCase().includes(q);
+    const mr = !resguardFiltro || a.nombreResguardatario.toLowerCase().includes(resguardFiltro);
+    return mq && mr;
+  });
+
+  const container = document.getElementById('printQRGrid');
+  container.innerHTML = '';
+
+  const COLS = 3;
+  const ROWS_PER_PAGE = 4;
+  const ITEMS_PER_PAGE = COLS * ROWS_PER_PAGE;
+  const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+
+  for(let p = 0; p < totalPages; p++){
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'qr-print-page';
+    const pageItems = data.slice(p*ITEMS_PER_PAGE, (p+1)*ITEMS_PER_PAGE);
+
+    const table = document.createElement('table');
+    let row = null;
+
+    pageItems.forEach((a, i) => {
+      if(i % COLS === 0){
+        row = document.createElement('tr');
+        table.appendChild(row);
+      }
+      const td = document.createElement('td');
+      const qrWrap = document.createElement('div');
+      td.appendChild(qrWrap);
+      const desc = document.createElement('div');
+      desc.className = 'qr-desc-print';
+      desc.textContent = a.descripcion.substring(0,50);
+      td.appendChild(desc);
+      const inv = document.createElement('div');
+      inv.className = 'qr-inv-print';
+      inv.textContent = 'N° '+a.numero+' | '+a.inventario.substring(0,22);
+      td.appendChild(inv);
+      const resguardText = document.createElement('div');
+      resguardText.className = 'qr-resguard-print';
+      resguardText.textContent = a.nombreResguardatario.trim().substring(0,35);
+      td.appendChild(resguardText);
+      row.appendChild(td);
+
+      try {
+        new QRCode(qrWrap, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#000000', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+    });
+
+    while(row && row.children.length < COLS){
+      row.appendChild(document.createElement('td'));
+    }
+
+    pageDiv.appendChild(table);
+    container.appendChild(pageDiv);
+  }
+
+  showToast(`Preparando ${data.length} QR para imprimir...`, 'success');
+  setTimeout(()=>{ window.print(); }, 1500);
+}
+
+// ==================== MODAL HELPERS ====================
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+});
+
+// ==================== TOAST ====================
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+
+// ==================== LEXI (asistente con IA) ====================
+const $l = id => document.getElementById(id);
+const nz = t => String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9ñ ]+/g,' ').replace(/\s+/g,' ').trim();
+const STOP_L = new Set('de la el los las un una unos unas del al en y o que cuantos cuantas cual cuales quien quienes tiene tienen hay son es esta estan para por con sin sobre muestrame dime dame lista todos todas bienes bien activo activos tenemos tengo favor porfa'.split(' '));
+
+function lexiToggle(force){
+  const w=$l('asistente'); const open = force!==undefined ? force : !w.classList.contains('open');
+  w.classList.toggle('open',open);
+  if(open) setTimeout(()=>$l('chatInput')&&$l('chatInput').focus(),200);
+}
+function lexiAddMsg(txt,user){
+  const d=document.createElement('div'); d.className='lw-msg '+(user?'lw-user':'lw-bot'); d.textContent=txt;
+  $l('chatBox').appendChild(d); const b=$l('lwBody'); b.scrollTop=b.scrollHeight; return d;
+}
+function lexiLimpiar(){
+  $l('chatBox').innerHTML='<div class="lw-msg lw-bot">Chat limpio. ¿En qué te ayudo?</div>';
+}
+function lexiEjemplo(btn){ $l('chatInput').value=btn.textContent; preguntarIA(); }
+
+// Burbuja arrastrable (un clic abre/cierra)
+(function(){
+  const b=$l('lexiBubble'); if(!b) return;
+  let down=false,moved=false,sx=0,sy=0,ox=0,oy=0;
+  b.addEventListener('pointerdown',e=>{down=true;moved=false;sx=e.clientX;sy=e.clientY;const r=b.getBoundingClientRect();ox=r.left;oy=r.top;b.setPointerCapture(e.pointerId);});
+  b.addEventListener('pointermove',e=>{ if(!down) return; const dx=e.clientX-sx,dy=e.clientY-sy; if(Math.abs(dx)+Math.abs(dy)>5) moved=true; if(!moved) return;
+    b.style.right='auto';b.style.bottom='auto';
+    b.style.left=Math.max(4,Math.min(innerWidth-60,ox+dx))+'px'; b.style.top=Math.max(4,Math.min(innerHeight-60,oy+dy))+'px'; });
+  b.addEventListener('pointerup',()=>{ if(down&&!moved) lexiToggle(); down=false; });
+})();
+
+// Voz
+let lexiVoz=false, lexiRec=null;
+const SRApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+function lexiToggleVoz(){ lexiVoz=!lexiVoz; $l('btnVoz').textContent=lexiVoz?'🔊':'🔇'; if(!lexiVoz&&window.speechSynthesis) speechSynthesis.cancel(); }
+function lexiHablar(t){ if(!lexiVoz||!window.speechSynthesis) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='es-MX'; const v=speechSynthesis.getVoices(); const ve=v.find(x=>x.lang==='es-MX')||v.find(x=>x.lang&&x.lang.startsWith('es')); if(ve)u.voice=ve; speechSynthesis.speak(u); }
+function lexiMic(){
+  if(!SRApi){ alert('Tu navegador no soporta reconocimiento de voz. Usa Google Chrome.'); return; }
+  if(lexiRec){ lexiRec.stop(); return; }
+  const btn=$l('btnMic'); lexiRec=new SRApi(); lexiRec.lang='es-MX'; lexiRec.interimResults=false;
+  btn.textContent='🔴';
+  lexiRec.onresult=e=>{ $l('chatInput').value=e.results[0][0].transcript; preguntarIA(); };
+  const fin=()=>{ btn.textContent='🎙️'; lexiRec=null; };
+  lexiRec.onerror=fin; lexiRec.onend=fin; lexiRec.start();
+}
+
+// ---- Contexto relevante (no se manda todo el inventario) ----
+function lexiLinea(a){
+  return `#${a.id} N°${a.numero} | ${a.descripcion} | ${a.marca||''} ${a.modelo||''} | serie:${a.serie||''} | inv:${a.inventario} | resg:${(a.nombreResguardatario||'').trim()} (${a.codResguardatario||''}) | emp:${a.empleadoResponsable||''} | $${a.valorAdquisicion||0}`;
+}
+function lexiContexto(pregunta){
+  const toks = nz(pregunta).split(' ').filter(t=>t.length>=3 && !STOP_L.has(t));
+  const nombres = {};
+  ASSETS.forEach(a=>{ const n=(a.nombreResguardatario||'').trim(); if(n) nombres[n]=(nombres[n]||0)+1; });
+  const listaNom = Object.entries(nombres).sort((x,y)=>x[0].localeCompare(y[0],'es')).map(([n,c])=>`${n} (${c})`).join('; ');
+  let match=[];
+  if(toks.length){
+    const sc = ASSETS.map(a=>{
+      const h = nz([a.descripcion,a.marca,a.modelo,a.serie,a.inventario,a.numero,a.nombreResguardatario,a.codResguardatario].join(' '));
+      const hw = h.split(' ');
+      let n=0; toks.forEach(t=>{ if(hw.some(w=>w===t||w.startsWith(t)||(t.length>=5&&t.startsWith(w)&&w.length>=4))) n++; });
+      return {a,n};
+    });
+    const max = Math.max(0,...sc.map(x=>x.n));
+    const min = Math.max(1, Math.ceil(toks.length/2));
+    if(max>=min) match = sc.filter(x=>x.n>=Math.min(max,Math.max(min,max))).map(x=>x.a);
+  }
+  const porPersona = {};
+  match.forEach(a=>{ const n=(a.nombreResguardatario||'').trim(); porPersona[n]=(porPersona[n]||0)+1; });
+  const resumenMatch = Object.entries(porPersona).sort((x,y)=>y[1]-x[1]).slice(0,20).map(([n,c])=>`${n}: ${c}`).join('; ');
+  const valorTotal = Math.round(ASSETS.reduce((s,a)=>s+(a.valorAdquisicion||0),0));
+  return `Total de bienes: ${ASSETS.length}. Valor total: $${valorTotal}.
+Resguardatarios (nombre exacto y cantidad de bienes): ${listaNom}
+${match.length?`Bienes que coinciden con la pregunta: ${match.length} en total${resumenMatch?` (por resguardatario → ${resumenMatch})`:''}. Detalle de los primeros ${Math.min(30,match.length)}:\n${match.slice(0,30).map(lexiLinea).join('\n')}`:'No hubo bienes que coincidan con palabras de la pregunta.'}`;
+}
+
+function lexiResolverPersona(nombre){
+  const n=nz(nombre); if(!n) return null;
+  const nombres=[...new Set(ASSETS.map(a=>(a.nombreResguardatario||'').trim()).filter(Boolean))];
+  return nombres.find(x=>nz(x)===n) || nombres.find(x=>nz(x).includes(n)||n.includes(nz(x))) || null;
+}
+function lexiRefrescar(){
+  saveToStorage(); renderAfterLoad();
+}
+
+function lexiEjecutar(txt){
+  let t=String(txt||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+  const i=t.indexOf('{'), j=t.lastIndexOf('}');
+  if(i!==0 || j<0) return null;           // no es acción: texto normal
+  let o; try{ o=JSON.parse(t.slice(i,j+1)); }catch(e){ return null; }
+  if(!o||!o.accion) return null;
+  const esAdm = canEdit();
+  const mut = ['editar_bien','reasignar','agregar_bien','eliminar_bien'];
+  if(mut.includes(o.accion) && !esAdm) return 'No tienes permisos para modificar bienes.';
+  if(o.accion==='eliminar_bien' && currentRole!=='admin') return 'Solo el administrador puede eliminar bienes.';
+  const campos={descripcion:'descripcion',marca:'marca',modelo:'modelo',serie:'serie',inventario:'inventario',numero:'numero',nombreResguardatario:'nombreResguardatario',codResguardatario:'codResguardatario',empleadoResponsable:'empleadoResponsable',valorAdquisicion:'valorAdquisicion'};
+
+  switch(o.accion){
+    case 'filtrar':{
+      showTab('inventario');
+      $l('searchInput').value = o.texto||'';
+      const per = o.resguardatario ? lexiResolverPersona(o.resguardatario) : null;
+      const sel=$l('filterResguard'); sel.value = per && [...sel.options].some(x=>x.value===per) ? per : '';
+      applyFilters();
+      return `Listo, filtré la tabla: ${filteredData.length} bien(es)${per?' de '+per:''}${o.texto?' con "'+o.texto+'"':''}.`;
+    }
+    case 'ver_ficha':{
+      const a=ASSETS.find(x=>x.id===Number(o.id)); if(!a) return 'No encontré ese bien.';
+      showDetail(a.id); return `Abrí la ficha de ${a.descripcion} (N° ${a.numero}).`;
+    }
+    case 'ver_qr':{
+      showTab('qr-codes');
+      $l('searchQR').value=o.texto||'';
+      const per=o.resguardatario?lexiResolverPersona(o.resguardatario):null;
+      const sel=$l('filterResguardQR'); sel.value = per && [...sel.options].some(x=>x.value===per) ? per : '';
+      renderQRGrid(); return 'Te muestro los códigos QR'+(per?' de '+per:'')+'. Usa "Imprimir todos los QR" si quieres sacarlos.';
+    }
+    case 'exportar_excel':{
+      exportExcel(); return 'Descargando el Excel con lo que se ve en la tabla.';
+    }
+    case 'editar_bien':{
+      const a=ASSETS.find(x=>x.id===Number(o.id)); if(!a) return 'No encontré ese bien.';
+      const c=o.cambios||{}; const hechos=[];
+      Object.keys(c).forEach(k=>{
+        if(!campos[k]) return;
+        let v=c[k]; if(k==='valorAdquisicion') v=Number(v)||0; else v=String(v).trim();
+        if(k==='nombreResguardatario'){ const per=lexiResolverPersona(v); if(per){ v=per; const ref=ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario); if(ref&&c.codResguardatario===undefined) a.codResguardatario=ref.codResguardatario; } }
+        a[k]=v; hechos.push(k);
+      });
+      if(!hechos.length) return 'No identifiqué qué campo cambiar.';
+      lexiRefrescar(); return `Listo, actualicé ${a.descripcion} (N° ${a.numero}): ${hechos.join(', ')}.`;
+    }
+    case 'reasignar':{
+      const per=lexiResolverPersona(o.resguardatario||o.hasta);
+      if(!per) return 'No encontré a esa persona entre los resguardatarios. Dime el nombre completo y su código para registrarla.';
+      let lista=[];
+      if(Array.isArray(o.ids)) lista=ASSETS.filter(a=>o.ids.map(Number).includes(a.id));
+      if(o.desde){ const d=lexiResolverPersona(o.desde); if(!d) return 'No encontré a la persona de origen.'; lista=lista.concat(ASSETS.filter(a=>(a.nombreResguardatario||'').trim()===d)); }
+      lista=[...new Set(lista)];
+      if(!lista.length) return 'No encontré bienes para reasignar.';
+      if(!confirm(`¿Reasignar ${lista.length} bien(es) a ${per}?`)) return 'Cancelado, no cambié nada.';
+      const ref=ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario);
+      lista.forEach(a=>{ a.nombreResguardatario=per; if(ref) a.codResguardatario=ref.codResguardatario; });
+      lexiRefrescar(); return `Listo, reasigné ${lista.length} bien(es) a ${per}.`;
+    }
+    case 'agregar_bien':{
+      const inv=String(o.inventario||'').trim(), des=String(o.descripcion||'').trim();
+      if(!inv||!des) return 'Para agregar un bien necesito al menos el número de inventario y la descripción.';
+      if(ASSETS.some(a=>a.inventario===inv)) return `Ya existe un bien con el inventario ${inv}.`;
+      const per=o.resguardatario?(lexiResolverPersona(o.resguardatario)||String(o.resguardatario).trim()):'';
+      const ref=per?ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario):null;
+      const id=Math.max(0,...ASSETS.map(a=>a.id))+1;
+      ASSETS.push({id,inventario:inv,numero:String(o.numero||'').trim(),descripcion:des,codResguardatario:ref?ref.codResguardatario:String(o.codResguardatario||''),nombreResguardatario:per,marca:String(o.marca||'SM').trim()||'SM',modelo:String(o.modelo||'SM').trim()||'SM',serie:String(o.serie||'SN').trim()||'SN',empleadoResponsable:String(o.empleadoResponsable||''),valorAdquisicion:Number(o.valor||o.valorAdquisicion)||0,almacen:'400'});
+      lexiRefrescar(); return `Listo, agregué "${des}" (${inv})${per?' a nombre de '+per:''}.`;
+    }
+    case 'eliminar_bien':{
+      const a=ASSETS.find(x=>x.id===Number(o.id)); if(!a) return 'No encontré ese bien.';
+      if(!confirm(`¿Eliminar "${a.descripcion}" (N° ${a.numero}, ${a.inventario})? No se puede deshacer.`)) return 'Cancelado, no eliminé nada.';
+      ASSETS=ASSETS.filter(x=>x.id!==a.id); lexiRefrescar(); return `Listo, eliminé "${a.descripcion}" (N° ${a.numero}).`;
+    }
+  }
+  return null;
+}
+
+
+// ---- Adjuntar PDF / imagen: comparar contra el inventario ----
+let lexiArchivo=null, lexiPlan=null;
+function lexiElegirArchivo(inp){
+  const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
+  if(f.size>15*1024*1024){ lexiAddMsg('El archivo pesa más de 15 MB. Mándalo más ligero o por partes.',false); return; }
+  if(!(f.type==='application/pdf'||f.type.startsWith('image/'))||/heic|heif/i.test(f.type)){ lexiAddMsg('Solo puedo leer PDF o imágenes (JPG/PNG).',false); return; }
+  lexiArchivo=f; $l('lwFile').style.display='flex'; $l('lwFileName').textContent='📎 '+f.name+' — escribe qué hago (ej. "agrega los que falten a Juan David")';
+  $l('chatInput').focus();
+}
+function lexiQuitarArchivo(){ lexiArchivo=null; $l('lwFile').style.display='none'; }
+function lexiB64(f){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.onerror=rej; fr.readAsDataURL(f); }); }
+const nkL = x => String(x||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+
+function lexiComparar(doc, destino){
+  const porInv=new Map(), porSerie=new Map(), porNum=new Map();
+  ASSETS.forEach(a=>{ porInv.set(nkL(a.inventario),a); if(a.serie&&a.serie!=='SN'&&nkL(a.serie).length>=4) porSerie.set(nkL(a.serie),a); if(a.numero) porNum.set(nkL(a.numero),a); });
+  const igual=[], otra=[], nuevos=[], sinInv=[];
+  (doc.bienes||[]).forEach(b=>{
+    let a = (b.inventario&&porInv.get(nkL(b.inventario))) || (b.serie&&nkL(b.serie).length>=4&&porSerie.get(nkL(b.serie))) || (!b.inventario&&b.numero&&porNum.get(nkL(b.numero)));
+    if(a){ if(destino && (a.nombreResguardatario||'').trim()!==destino) otra.push({a,b}); else igual.push({a,b}); }
+    else if(b.inventario) nuevos.push(b); else sinInv.push(b);
+  });
+  const enDoc=new Set([...igual,...otra].map(x=>x.a.id));
+  const sobran = destino ? ASSETS.filter(a=>(a.nombreResguardatario||'').trim()===destino && !enDoc.has(a.id)) : [];
+  return {igual,otra,nuevos,sinInv,sobran};
+}
+function lexiLista(ul,items,f){ items.slice(0,15).forEach(x=>{ const li=document.createElement('li'); li.textContent=f(x); ul.appendChild(li); }); if(items.length>15){ const li=document.createElement('li'); li.textContent='… y '+(items.length-15)+' más'; ul.appendChild(li); } }
+
+async function lexiProcesarArchivo(pregunta){
+  const f=lexiArchivo; lexiQuitarArchivo();
+  lexiAddMsg('📎 '+f.name+(pregunta?'\n'+pregunta:''),true);
+  const pens=lexiAddMsg('Leyendo el documento...',false);
+  try{
+    let n=0; while(typeof window.extraerConIA!=='function' && !window.lexiInitError && n<24){ await new Promise(r=>setTimeout(r,250)); n++; }
+    if(typeof window.extraerConIA!=='function') throw new Error('El asistente todavía no termina de cargar.');
+    const nombres=[...new Set(ASSETS.map(a=>(a.nombreResguardatario||'').trim()).filter(Boolean))].join('; ');
+    const prompt=`Lee el documento adjunto (lista de bienes / resguardo de activos). Extrae TODOS los bienes que aparecen, sin omitir ninguno. Responde SOLO con JSON: {"persona":"","bienes":[{"inventario":"","numero":"","descripcion":"","marca":"","modelo":"","serie":"","valor":0}]}.
+- "inventario" es el número de inventario completo tal como aparece (ej. empieza con RJJ09...). Si no aparece, déjalo "".
+- "persona": a quién deben asignarse los bienes. Si el usuario lo indica en su instrucción, usa esa persona; si no, usa el resguardatario que aparece en el documento; si no hay, "".
+- Nombres existentes en el sistema (usa el nombre exacto de esta lista si coincide): ${nombres}
+Instrucción del usuario: ${pregunta||'(ninguna)'}`;
+    const raw=await window.extraerConIA(prompt,f.type||'application/pdf',await lexiB64(f));
+    let doc; try{ doc=JSON.parse(String(raw).replace(/^```(?:json)?/i,'').replace(/```$/,'').trim()); }catch(e){ throw new Error('No pude interpretar el documento. Prueba con una foto más nítida o un PDF con texto.'); }
+    if(!doc||!Array.isArray(doc.bienes)||!doc.bienes.length){ pens.textContent='No encontré bienes en el documento. ¿Es la hoja correcta?'; return; }
+    const per=lexiResolverPersona(doc.persona); const destino=per||''; const nombreDestino=per||String(doc.persona||'').trim();
+    const c=lexiComparar(doc,destino);
+    lexiPlan={destino:nombreDestino,existe:!!per,otra:c.otra,nuevos:c.nuevos};
+    pens.textContent='';
+    const box=document.createElement('div'); box.className='lw-plan';
+    const t=document.createElement('div'); t.innerHTML='<b>Comparé el documento con el sistema</b>'; box.appendChild(t);
+    const resumen=document.createElement('div'); resumen.style.marginTop='4px';
+    resumen.textContent=`El documento trae ${doc.bienes.length} bien(es)`+(nombreDestino?` · persona: ${nombreDestino}${per?'':' (no está registrada, se crearía nueva)'}`:' · sin persona indicada');
+    box.appendChild(resumen);
+    const sec=(titulo,items,fx)=>{ if(!items.length) return; const h=document.createElement('h4'); h.textContent=titulo+' ('+items.length+')'; box.appendChild(h); const ul=document.createElement('ul'); lexiLista(ul,items,fx); box.appendChild(ul); };
+    sec('✅ Ya están con la persona correcta',c.igual,x=>`${x.a.descripcion} — ${x.a.inventario}`);
+    sec('🔁 Están en el sistema con OTRA persona',c.otra,x=>`${x.a.descripcion} — ${x.a.inventario} (ahora: ${(x.a.nombreResguardatario||'').trim()})`);
+    sec('➕ NO están en el sistema',c.nuevos,b=>`${b.descripcion||''} — ${b.inventario}`);
+    sec('⚠️ Sin número de inventario (revisar a mano)',c.sinInv,b=>`${b.descripcion||''} ${b.serie?'serie '+b.serie:''}`);
+    sec('❓ Están con la persona en el sistema pero NO en el documento',c.sobran,a=>`${a.descripcion} — ${a.inventario}`);
+    const acc=(c.otra.length+c.nuevos.length);
+    if(acc && nombreDestino && canEdit()){
+      const act=document.createElement('div'); act.className='lw-act';
+      const ok=document.createElement('button'); ok.className='ok'; ok.textContent=`Aplicar: reasignar ${c.otra.length} y agregar ${c.nuevos.length}`; ok.onclick=()=>lexiAplicarPlan(box);
+      const no=document.createElement('button'); no.textContent='Cancelar'; no.onclick=()=>{ lexiPlan=null; act.remove(); const m=document.createElement('div'); m.style.marginTop='8px'; m.textContent='Cancelado, no cambié nada.'; box.appendChild(m); };
+      act.appendChild(ok); act.appendChild(no); box.appendChild(act);
+    } else if(acc && !nombreDestino){
+      const m=document.createElement('div'); m.style.marginTop='8px'; m.textContent='Dime a qué persona asignarlos (adjunta otra vez con una instrucción como "ponlos a nombre de Juan David").'; box.appendChild(m);
+    } else if(!acc){ const m=document.createElement('div'); m.style.marginTop='8px'; m.textContent='No hay nada que cambiar. Todo coincide.'; box.appendChild(m); }
+    pens.replaceWith(box); const b=$l('lwBody'); b.scrollTop=b.scrollHeight;
+  }catch(e){ pens.textContent='No pude procesar el archivo. Detalle: '+(e&&e.message||e); console.error(e); }
+}
+function lexiAplicarPlan(box){
+  const pl=lexiPlan; if(!pl) return; if(!canEdit()){ alert('Sin permisos de edición'); return; }
+  if(!confirm(`¿Aplicar cambios a nombre de ${pl.destino}?\n• Reasignar ${pl.otra.length}\n• Agregar ${pl.nuevos.length}`)) return;
+  const per=lexiResolverPersona(pl.destino); const nombre=per||pl.destino.toUpperCase();
+  const ref=per?ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario):null;
+  pl.otra.forEach(({a})=>{ a.nombreResguardatario=nombre; if(ref) a.codResguardatario=ref.codResguardatario; });
+  let id=Math.max(0,...ASSETS.map(a=>a.id));
+  pl.nuevos.forEach(b=>{ id++; ASSETS.push({id,inventario:String(b.inventario).trim(),numero:String(b.numero||'').trim(),descripcion:String(b.descripcion||'SIN DESCRIPCIÓN').trim(),codResguardatario:ref?ref.codResguardatario:'',nombreResguardatario:nombre,marca:String(b.marca||'SM').trim()||'SM',modelo:String(b.modelo||'SM').trim()||'SM',serie:String(b.serie||'SN').trim()||'SN',empleadoResponsable:'',valorAdquisicion:Number(b.valor)||0,almacen:'400'}); });
+  lexiRefrescar(); lexiPlan=null;
+  const act=box.querySelector('.lw-act'); if(act) act.remove();
+  const m=document.createElement('div'); m.style.cssText='margin-top:8px;font-weight:700;color:#15803d'; m.textContent=`✔ Listo: reasigné ${pl.otra.length} y agregué ${pl.nuevos.length} a nombre de ${nombre}.`+(per?'':' (Persona nueva: sin código de resguardatario, edítalo si lo necesitas.)'); box.appendChild(m);
+}
+
+async function preguntarIA(){
+  const inp=$l('chatInput'); const pregunta=inp.value.trim();
+  if(lexiArchivo){ inp.value=''; const ch0=$l('lwChips'); if(ch0) ch0.remove(); return lexiProcesarArchivo(pregunta); }
+  if(!pregunta) return;
+  if(lexiVoz&&window.speechSynthesis){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }
+  const ch=$l('lwChips'); if(ch) ch.remove();
+  if(pregunta==='/diag'){
+    inp.value=''; lexiAddMsg('/diag',true);
+    const m=lexiAddMsg('Midiendo tiempos... (unos 30 segundos)',false); const lineas=[];
+    try{ let n=0; while(typeof window.lexiDiagnostico!=='function' && n<20){ await new Promise(r=>setTimeout(r,250)); n++; }
+      await window.lexiDiagnostico(l=>{ lineas.push(l); m.textContent='Diagnóstico:\n'+lineas.join('\n'); }); m.textContent='Diagnóstico:\n'+lineas.join('\n')+'\nListo. Mándame este resultado.';
+    }catch(e){ m.textContent='Diagnóstico falló: '+(e&&e.message||e); }
+    return;
+  }
+  lexiAddMsg(pregunta,true); inp.value='';
+  const pens=lexiAddMsg('Pensando...',false);
+  const t0=performance.now(); let tPrimera=null;
+  const prompt=`Eres LEXI, asistente del Sistema de Control de Activos RJJ09 de la CGACCE (INECC). Responde siempre en español, directo al grano, sin saludar ni presentarte. Usa solo los datos que se te dan; si no están, dilo.
+
+${lexiContexto(pregunta)}
+
+Si el usuario pide una ACCIÓN, responde ÚNICAMENTE con un JSON (sin texto extra ni comillas de código) con una de estas formas:
+{"accion":"filtrar","texto":"","resguardatario":""}  (mostrar/filtrar la tabla; resguardatario = nombre exacto de la lista)
+{"accion":"ver_ficha","id":N}
+{"accion":"ver_qr","texto":"","resguardatario":""}
+{"accion":"exportar_excel"}  (descarga lo que muestra la tabla; antes filtra si hace falta)
+{"accion":"editar_bien","id":N,"cambios":{"descripcion":"","marca":"","modelo":"","serie":"","inventario":"","numero":"","nombreResguardatario":"","codResguardatario":"","empleadoResponsable":"","valorAdquisicion":N}}
+{"accion":"reasignar","ids":[N,...],"desde":"nombre exacto (opcional: pasa TODOS sus bienes)","resguardatario":"nombre exacto de quien los recibe"}
+{"accion":"agregar_bien","inventario":"","numero":"","descripcion":"","marca":"","modelo":"","serie":"","resguardatario":"","valor":N}
+{"accion":"eliminar_bien","id":N}
+En "cambios" pon solo los campos que cambian. Identifica el bien por el id de la lista aunque el nombre esté incompleto o mal escrito. Si hay ambigüedad o no hay coincidencia, no generes JSON: pide aclaración en texto normal.
+Si NO es una acción (pregunta, conteo, consulta, charla), responde en texto plano. Para conteos usa los totales que se te dan.
+
+Usuario: ${pregunta}`;
+  try{
+    let n=0; while(typeof window.preguntarGemini!=='function' && !window.lexiInitError && n<24){ await new Promise(r=>setTimeout(r,250)); n++; }
+    if(typeof window.preguntarGemini!=='function') throw new Error(window.lexiInitError?('No se pudo iniciar: '+(window.lexiInitError.message||window.lexiInitError)):'El asistente todavía no termina de cargar. Espera unos segundos y vuelve a intentar.');
+    const cruda=await window.preguntarGemini(prompt, parcial=>{
+      if(tPrimera===null) tPrimera=performance.now()-t0;
+      const t=parcial.trimStart();
+      if(t && t[0]!=='{' && !t.startsWith('```')){ pens.textContent=parcial; const b=$l('lwBody'); b.scrollTop=b.scrollHeight; }
+    });
+    const acc=lexiEjecutar(cruda);
+    const fin=acc!=null?acc:cruda;
+    pens.textContent=fin; lexiHablar(fin);
+    const tot=((performance.now()-t0)/1000).toFixed(1), pri=tPrimera!=null?(tPrimera/1000).toFixed(1):tot;
+    const inf=document.createElement('div'); inf.style.cssText='font-size:10px;color:#9aa5a0;margin-top:5px'; inf.textContent=`⏱ primera respuesta ${pri}s · total ${tot}s · modo ${window.lexiModo||'?'}`; pens.appendChild(inf);
+  }catch(e){
+    pens.textContent='No pude conectar con el asistente. Detalle: '+(e&&e.message||e);
+    console.error(e);
+  }
+}
+
+// ==================== START ====================
+// El arranque lo dispara auth.onAuthStateChanged: si hay sesión de admin,
+// carga datos y muestra la app; si no, muestra el login.
+</script>
+</body>
+</html>
