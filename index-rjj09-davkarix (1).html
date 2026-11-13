@@ -1,0 +1,2768 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAVKARIX OS // RJJ09 — Control Patrimonial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check-compat.js"></script>
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyBkIzwu0ClTuZTl5KGsDlgQYKRWr3GdhSg",
+    authDomain: "inventario-cgacce.firebaseapp.com",
+    projectId: "inventario-cgacce",
+    storageBucket: "inventario-cgacce.firebasestorage.app",
+    messagingSenderId: "291366802478",
+    appId: "1:291366802478:web:527b2906efc00b5f54fbbf"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+window.addEventListener('DOMContentLoaded', function(){
+    const appCheck = firebase.appCheck();
+    appCheck.activate('6LdWXYQtAAAAAEv8x5FxCPlX9z6QVgjnIE_DGhUb', true);
+  });
+</script>
+<style>
+:root {
+  --bg-obsidian: #030711;
+  --bg-navy: #071A2B;
+  --bg-surface: rgba(10, 25, 47, 0.55);
+  --bg-surface-hover: rgba(15, 38, 70, 0.75);
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(0, 184, 169, 0.35);
+  --accent-turquesa: #00B8A9;
+  --accent-cyan: #38BDF8;
+  --accent-amber: #F59E0B;
+  --accent-crimson: #F43F5E;
+  --accent-emerald: #10B981;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #475569;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-obsidian);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* AMBIENT TELEMETRY GRID BACKGROUND */
+.ambient-grid {
+  position: fixed;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000 30%, transparent 100%);
+  z-index: -3;
+  pointer-events: none;
+}
+
+.ambient-glow {
+  position: fixed;
+  top: -15%;
+  left: 20%;
+  width: 60%;
+  height: 45%;
+  background: radial-gradient(circle, rgba(0, 184, 169, 0.12) 0%, rgba(7, 26, 43, 0) 70%);
+  filter: blur(80px);
+  z-index: -2;
+  pointer-events: none;
+}
+
+#appVideoBg {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: -4; opacity: 0.18; filter: contrast(1.2) saturate(1.1);
+}
+#appVideoVeil {
+  position: fixed; inset: 0;
+  background: linear-gradient(180deg, rgba(3,7,17,0.75) 0%, rgba(3,7,17,0.95) 100%);
+  z-index: -3;
+}
+@media print { #appVideoBg, #appVideoVeil, .ambient-grid, .ambient-glow { display: none !important; } }
+
+/* TOP COMMAND BAR (HUD HEADER) */
+.header {
+  height: 68px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(3, 7, 17, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-hairline);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+.brand-logo-wrap img { height: 34px; width: auto; display: block; }
+
+.brand-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-hairline);
+}
+
+.brand-title-group { display: flex; flex-direction: column; gap: 2px; }
+.brand-super {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-turquesa);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-turquesa);
+  box-shadow: 0 0 8px var(--accent-turquesa);
+  animation: pulseDot 2s infinite;
+}
+@keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text-primary);
+}
+
+.header-controls { display: flex; align-items: center; gap: 14px; }
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-hairline);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* PRECISION BUTTONS */
+.btn {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  letter-spacing: 0.1px;
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-primary {
+  background: var(--accent-turquesa);
+  color: #021210;
+  font-weight: 600;
+  box-shadow: 0 0 20px rgba(0, 184, 169, 0.25);
+}
+.btn-primary:hover {
+  background: #00d1c0;
+  box-shadow: 0 0 28px rgba(0, 184, 169, 0.45);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border-color: var(--border-hairline);
+}
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-cyan-outline {
+  background: rgba(56, 189, 248, 0.06);
+  color: var(--accent-cyan);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+.btn-cyan-outline:hover {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: var(--accent-cyan);
+}
+
+.btn-danger {
+  background: rgba(244, 63, 94, 0.12);
+  color: var(--accent-crimson);
+  border-color: rgba(244, 63, 94, 0.3);
+}
+.btn-danger:hover {
+  background: var(--accent-crimson);
+  color: #fff;
+}
+
+.btn-sm { padding: 5px 10px; font-size: 11.5px; }
+.btn-icon { padding: 6px 8px; }
+
+/* MAIN CONTAINER */
+.container {
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: 28px 32px 80px;
+}
+
+/* LOGIN SCREEN — ARCHITECTURAL VAULT */
+#loginScreen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: calc(100vh - 68px); position: relative; padding: 20px;
+}
+#loginVideoBg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; z-index: 0; opacity: 0.3;
+}
+#loginOverlay {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at center, rgba(3,7,17,0.6) 0%, #030711 100%);
+  z-index: 1;
+}
+.login-card {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 420px;
+  background: rgba(7, 26, 43, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0, 184, 169, 0.5);
+  border-radius: var(--radius-lg);
+  padding: 44px 40px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.login-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-turquesa);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
+}
+.login-card h2 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.login-card p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+/* FORM INPUTS */
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(3, 7, 17, 0.7);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  transition: all 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-turquesa);
+  box-shadow: 0 0 0 3px rgba(0, 184, 169, 0.15);
+  background: rgba(3, 7, 17, 0.95);
+}
+
+/* SEGMENTED NAVIGATION TABS */
+.nav-dock {
+  display: inline-flex;
+  background: rgba(7, 26, 43, 0.45);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 28px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.tab-btn:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.03);
+}
+.tab-btn.active {
+  background: rgba(0, 184, 169, 0.14);
+  color: var(--accent-turquesa);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(0, 184, 169, 0.35);
+}
+
+/* TELEMETRY KPI CARDS (BENTO ROW) */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.18);
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle at top right, rgba(0, 184, 169, 0.15), transparent 70%);
+  pointer-events: none;
+}
+.stat-card.cyan::after { background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 70%); }
+.stat-card.amber::after { background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.15), transparent 70%); }
+.stat-card.emerald::after { background: radial-gradient(circle at top right, rgba(16, 185, 129, 0.15), transparent 70%); }
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.stat-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-secondary);
+}
+.stat-indicator {
+  width: 8px; height: 8px; border-radius: 2px;
+  background: var(--accent-turquesa);
+}
+.stat-card.cyan .stat-indicator { background: var(--accent-cyan); }
+.stat-card.amber .stat-indicator { background: var(--accent-amber); }
+.stat-card.emerald .stat-indicator { background: var(--accent-emerald); }
+
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+/* COMMAND TOOLBAR */
+.toolbar {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+.search-wrap input {
+  width: 100%;
+  padding: 9px 14px 9px 38px;
+  background: rgba(3, 7, 17, 0.65);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+.search-wrap input:focus { outline: none; border-color: var(--accent-turquesa); }
+.search-icon {
+  position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  color: var(--text-secondary); font-size: 13px; pointer-events: none;
+}
+.toolbar select {
+  padding: 9px 14px;
+  background: rgba(3, 7, 17, 0.65);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  max-width: 260px;
+}
+.toolbar select:focus { outline: none; border-color: var(--accent-turquesa); }
+
+/* PRECISION DATA MATRIX (TABLE) */
+.table-wrap {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+.table-header {
+  padding: 14px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-hairline);
+  background: rgba(3, 7, 17, 0.4);
+}
+.table-header-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.table-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: rgba(3, 7, 17, 0.65);
+  padding: 13px 18px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border-hairline);
+  white-space: nowrap;
+}
+tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+tbody tr:hover { background: rgba(0, 184, 169, 0.05); }
+tbody td {
+  padding: 14px 18px;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.num-cell {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-turquesa);
+}
+.desc-cell { max-width: 310px; }
+.desc-text { font-weight: 500; color: var(--text-primary); display: block; line-height: 1.35; }
+.desc-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; display: block; }
+
+.inv-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  letter-spacing: 0.3px;
+}
+.serie-cell { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); }
+.resguard-name { font-weight: 500; font-size: 12.5px; color: var(--text-primary); }
+.resguard-code { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
+.loc-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--accent-turquesa);
+  background: rgba(0, 184, 169, 0.1);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.actions-cell { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* PAGINATION */
+.pagination {
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+  padding: 16px; border-top: 1px solid var(--border-hairline);
+  background: rgba(3, 7, 17, 0.3);
+}
+.page-btn {
+  padding: 6px 11px;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.page-btn:hover { border-color: var(--accent-turquesa); color: var(--text-primary); }
+.page-btn.active {
+  background: var(--accent-turquesa);
+  color: #021210;
+  border-color: var(--accent-turquesa);
+  font-weight: 700;
+}
+.page-info { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary); margin: 0 8px; }
+
+/* ACCORDION GROUPS (RESGUARDATARIOS) */
+.group-card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.group-card:hover { border-color: rgba(255,255,255,0.16); }
+.group-head {
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: rgba(255,255,255,0.02);
+}
+.group-head:hover { background: rgba(255,255,255,0.04); }
+.group-items { padding: 4px 20px 14px; border-top: 1px solid var(--border-hairline); }
+
+/* FLOOR PLAN CAD MAP */
+.mapaC {
+  position: relative; width: 100%; aspect-ratio: 16/10;
+  background-color: #040B16;
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-md);
+  overflow: hidden; touch-action: none;
+  background-image: 
+    linear-gradient(rgba(0, 184, 169, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 184, 169, 0.08) 1px, transparent 1px);
+  background-size: 4% 4%;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.8);
+}
+.mapaR {
+  position: absolute; box-sizing: border-box;
+  border: 1px solid var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.12);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 4px; cursor: pointer; overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.mapaR:hover { background: rgba(56, 189, 248, 0.22); box-shadow: 0 0 15px rgba(56, 189, 248, 0.3); }
+.mapaR.vacio { border-color: rgba(148, 163, 184, 0.35); background: rgba(148, 163, 184, 0.06); }
+.mapaR.edit { cursor: move; border-style: dashed; }
+.mapaR b { font-family: var(--font-mono); font-size: clamp(9px, 1.4vw, 12px); line-height: 1.15; color: var(--text-primary); }
+.mapaR span { font-family: var(--font-mono); font-size: clamp(8px, 1.1vw, 10.5px); color: var(--accent-cyan); margin-top: 2px; }
+.mapaR.mk { border-style: solid; background: rgba(15, 23, 42, 0.9); border-color: var(--text-secondary); }
+.mapaR.mk-principal { background: rgba(56, 189, 248, 0.2); border-color: var(--accent-cyan); }
+.mapaR.mk-emerg { background: rgba(16, 185, 129, 0.2); border-color: var(--accent-emerald); }
+.mapaR.mk-extintor { background: rgba(244, 63, 94, 0.2); border-color: var(--accent-crimson); }
+.mapaR.mod { border-color: var(--accent-turquesa); background: rgba(0, 184, 169, 0.16); }
+.mapaR.mod span { color: var(--accent-turquesa); }
+.mapaR.ejec { border-color: var(--accent-amber); background: rgba(245, 158, 11, 0.16); }
+.mapaR.ejec span { color: var(--accent-amber); }
+.mapaH {
+  position: absolute; right: 0; bottom: 0; width: 16px; height: 16px;
+  background: var(--accent-turquesa); border-radius: 4px 0 6px 0; cursor: nwse-resize;
+}
+
+/* MODALS */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(2, 5, 12, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 200; align-items: center; justify-content: center; padding: 16px;
+}
+.modal-overlay.open { display: flex; animation: fadeIn 0.18s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: #071526;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--accent-turquesa);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
+}
+.modal-head {
+  padding: 20px 26px 16px;
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 0; background: #071526; z-index: 2;
+}
+.modal-head h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; }
+.modal-body { padding: 24px 26px; }
+.modal-footer {
+  padding: 16px 26px;
+  border-top: 1px solid var(--border-hairline);
+  display: flex; justify-content: flex-end; gap: 10px;
+  background: rgba(3, 7, 17, 0.5);
+}
+.close-btn {
+  background: none; border: none; color: var(--text-secondary);
+  font-size: 22px; cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 4px;
+}
+.close-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* DETAIL VIEW */
+.asset-detail-header {
+  display: flex; gap: 22px; align-items: flex-start;
+  margin-bottom: 22px; padding-bottom: 22px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+.asset-qr-box {
+  background: #ffffff; padding: 10px; border-radius: 10px;
+  text-align: center; flex-shrink: 0;
+  box-shadow: 0 0 25px rgba(0, 184, 169, 0.25);
+}
+.asset-qr-box .qr-label { font-family: var(--font-mono); font-size: 9.5px; color: #0f172a; margin-top: 6px; font-weight: 600; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.detail-item {
+  background: rgba(3, 7, 17, 0.5);
+  border: 1px solid var(--border-hairline);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+}
+.detail-item label {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 4px;
+}
+.detail-item span { font-size: 13.5px; color: var(--text-primary); font-weight: 500; }
+
+/* QR PREVIEW CARDS */
+.qr-preview-card {
+  background: rgba(7, 26, 43, 0.6);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 14px; text-align: center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.qr-preview-card:hover { transform: translateY(-2px); border-color: var(--accent-turquesa); }
+.qr-white-frame {
+  background: #ffffff; padding: 8px; border-radius: 8px;
+  display: inline-block; margin-bottom: 8px;
+}
+
+/* LEXI NEURAL CORE (ASSISTANT) */
+.lexi-bubble {
+  position: fixed; right: 24px; bottom: 64px;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #00f5d4, #0077b6 70%, #030711 100%);
+  border: 1px solid rgba(255,255,255,0.3);
+  display: none; align-items: center; justify-content: center;
+  cursor: grab; z-index: 95; user-select: none; touch-action: none;
+  box-shadow: 0 0 30px rgba(0, 184, 169, 0.55), inset 0 0 12px rgba(255,255,255,0.6);
+  transition: transform 0.2s;
+}
+.lexi-bubble:hover { transform: scale(1.06); }
+.lexi-core-ring {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px #fff;
+  animation: coreBreath 3s ease-in-out infinite;
+}
+@keyframes coreBreath { 0%, 100% { transform: scale(0.85); opacity: 0.85; } 50% { transform: scale(1.1); opacity: 1; } }
+
+.lexi-window {
+  position: fixed; right: 24px; bottom: 130px;
+  width: 400px; max-width: 92vw; height: min(610px, 74vh);
+  background: rgba(6, 18, 34, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 184, 169, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.85);
+  z-index: 150; display: none; flex-direction: column; overflow: hidden;
+  opacity: 0; transform: translateY(14px) scale(0.98);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.lexi-window.open { display: flex; opacity: 1; transform: none; }
+
+.lw-head {
+  background: linear-gradient(90deg, rgba(0, 184, 169, 0.18), rgba(7, 26, 43, 0.6));
+  border-bottom: 1px solid var(--border-hairline);
+  padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+}
+.lw-left { display: flex; align-items: center; gap: 12px; }
+.lw-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #00f5d4, #0284c7);
+  box-shadow: 0 0 14px rgba(0, 184, 169, 0.6);
+  display: flex; align-items: center; justify-content: center;
+}
+.lw-title { font-family: var(--font-display); font-weight: 700; font-size: 14.5px; letter-spacing: 0.5px; }
+.lw-sub { font-family: var(--font-mono); font-size: 10px; color: var(--accent-turquesa); }
+.lw-acts { display: flex; gap: 6px; }
+.lw-ib {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border-hairline);
+  color: var(--text-secondary); font-size: 12px; cursor: pointer;
+}
+.lw-ib:hover { color: var(--text-primary); background: rgba(255,255,255,0.12); }
+
+.lw-body { flex: 1; overflow-y: auto; padding: 16px; }
+.lw-chat { display: flex; flex-direction: column; gap: 12px; }
+.lw-msg {
+  max-width: 86%; padding: 11px 14px; font-size: 13px; line-height: 1.5;
+  border-radius: 12px; white-space: pre-wrap;
+}
+.lw-bot {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-primary);
+  border-bottom-left-radius: 4px;
+}
+.lw-user {
+  align-self: flex-end;
+  background: var(--accent-turquesa);
+  color: #021210;
+  font-weight: 500;
+  border-bottom-right-radius: 4px;
+}
+.lw-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.lw-chip {
+  background: rgba(0, 184, 169, 0.08);
+  border: 1px solid rgba(0, 184, 169, 0.25);
+  color: var(--accent-turquesa);
+  border-radius: 16px; padding: 6px 12px; font-size: 11.5px; cursor: pointer;
+  transition: all 0.15s;
+}
+.lw-chip:hover { background: rgba(0, 184, 169, 0.2); }
+
+.lw-foot {
+  display: flex; gap: 8px; align-items: center;
+  padding: 12px 14px; border-top: 1px solid var(--border-hairline);
+  background: rgba(3, 7, 17, 0.7);
+}
+.lw-foot input {
+  flex: 1; background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-hairline);
+  border-radius: 20px; padding: 9px 15px; font-size: 12.5px;
+  color: var(--text-primary); outline: none;
+}
+.lw-foot input:focus { border-color: var(--accent-turquesa); }
+.lw-fb {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border-hairline);
+  color: var(--text-secondary); font-size: 13px; cursor: pointer; flex: none;
+}
+.lw-fb:hover { color: var(--text-primary); }
+.lw-send {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent-turquesa); border: none;
+  color: #021210; font-size: 14px; font-weight: 700; cursor: pointer; flex: none;
+}
+
+#lwFile {
+  display: none; align-items: center; gap: 8px; padding: 8px 14px;
+  background: rgba(0, 184, 169, 0.15); border-top: 1px solid var(--border-glow);
+  font-size: 11.5px; color: var(--accent-turquesa);
+}
+#lwFile button { margin-left: auto; border: none; background: none; cursor: pointer; color: var(--text-primary); }
+
+.lw-plan {
+  background: rgba(3, 7, 17, 0.8); border: 1px solid var(--border-glow);
+  border-radius: 10px; padding: 14px; font-size: 12px; line-height: 1.5;
+}
+.lw-plan h4 { font-size: 12.5px; margin: 10px 0 4px; color: var(--accent-turquesa); }
+.lw-plan ul { margin: 0 0 6px 16px; color: var(--text-secondary); }
+.lw-plan .lw-act { display: flex; gap: 8px; margin-top: 12px; }
+.lw-plan .lw-act button {
+  flex: 1; padding: 8px; border-radius: 6px; border: 1px solid var(--border-hairline);
+  background: rgba(255,255,255,0.05); color: var(--text-primary); cursor: pointer; font-weight: 600;
+}
+.lw-plan .lw-act button.ok { background: var(--accent-turquesa); color: #021210; border-color: var(--accent-turquesa); }
+
+/* DAVKARIX CORNER SIGNATURE */
+.corner-badge {
+  position: fixed; right: 20px; bottom: 16px; z-index: 90;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(3, 7, 17, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px 6px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border-hairline);
+  pointer-events: none;
+}
+.cb-dk {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--accent-turquesa);
+  color: var(--accent-turquesa);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 8px; font-weight: 700;
+}
+.cb-text { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; color: var(--text-secondary); text-transform: uppercase; }
+
+/* SPLASH & TOAST */
+@keyframes spin { to { transform: rotate(360deg); } }
+#authSplash {
+  display: flex; flex-direction: column; gap: 14px;
+  align-items: center; justify-content: center; min-height: calc(100vh - 68px);
+}
+#authSplash .spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border-hairline);
+  border-top-color: var(--accent-turquesa);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+
+.toast {
+  position: fixed; bottom: 24px; left: 24px;
+  background: #071A2B; color: var(--text-primary);
+  border: 1px solid var(--border-hairline);
+  padding: 12px 18px; border-radius: var(--radius-sm);
+  font-size: 13px; z-index: 9999;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+  transform: translateY(100px); opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-left: 3px solid var(--accent-emerald); }
+.toast.error { border-left: 3px solid var(--accent-crimson); }
+
+.role-badge {
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 3px 9px; border-radius: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.role-admin { background: rgba(0, 184, 169, 0.15); color: var(--accent-turquesa); border: 1px solid rgba(0, 184, 169, 0.3); }
+.role-editor { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+.role-consulta { background: rgba(148, 163, 184, 0.15); color: var(--text-secondary); border: 1px solid rgba(148, 163, 184, 0.3); }
+
+/* SCAN CARD */
+.scan-card {
+  background: var(--bg-surface); backdrop-filter: blur(20px);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg); max-width: 480px; margin: 36px auto; padding: 28px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+}
+
+/* PRINT VIEW */
+#printView { display: none; }
+@media print {
+  body > *:not(#printView) { display: none !important; }
+  #printView { display: block !important; background: #fff; color: #000; }
+  #printQRGrid { display: block !important; }
+  .qr-print-page { break-after: page; page-break-after: always; }
+  .qr-print-page:last-child { break-after: auto; page-break-after: auto; }
+  #printQRGrid table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+  #printQRGrid td { border: 1px solid #ccc; padding: 10px 8px; text-align: center; vertical-align: top; width: 33.333%; box-sizing: border-box; }
+  #printQRGrid td canvas { width: 110px !important; height: 110px !important; margin: 0 auto; }
+  #printQRGrid .qr-desc-print { font-size: 8.5pt; line-height: 1.2; color: #000; font-weight: 600; word-break: break-all; }
+  #printQRGrid .qr-inv-print { font-size: 7pt; color: #555; font-family: monospace; margin-top: 2px; }
+  #printQRGrid .qr-resguard-print { font-size: 7.5pt; color: #333; margin-top: 2px; }
+  #printQRGrid tr { page-break-inside: avoid; break-inside: avoid; }
+  @page { size: letter portrait; margin: 10mm; }
+}
+
+@media (max-width: 900px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .header { padding: 0 16px; }
+  .container { padding: 20px 14px 80px; }
+}
+@media (max-width: 640px) {
+  .grid-2, .grid-3, .detail-grid { grid-template-columns: 1fr; }
+  thead th:nth-child(3), thead th:nth-child(4), thead th:nth-child(5),
+  tbody td:nth-child(3), tbody td:nth-child(4), tbody td:nth-child(5) { display: none; }
+  .asset-detail-header { flex-direction: column; }
+}
+</style>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+  import { initializeAppCheck, getToken, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app-check.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-ai.js";
+  try{
+    const cfg = {
+      apiKey: "AIzaSyBkIzwu0ClTuZTl5KGsDlgQYKRWr3GdhSg",
+      authDomain: "inventario-cgacce.firebaseapp.com",
+      projectId: "inventario-cgacce",
+      storageBucket: "inventario-cgacce.firebasestorage.app",
+      messagingSenderId: "291366802478",
+      appId: "1:291366802478:web:527b2906efc00b5f54fbbf"
+    };
+    const appAI = initializeApp(cfg, "ai-logic-app");
+    const appCheckAI = initializeAppCheck(appAI, { provider: new ReCaptchaV3Provider("6LdWXYQtAAAAAEv8x5FxCPlX9z6QVgjnIE_DGhUb"), isTokenAutoRefreshEnabled: true });
+    const ai = getAI(appAI, { backend: new GoogleAIBackend() });
+    const MODELO = "gemini-3.1-flash-lite";
+    const rapido = getGenerativeModel(ai, { model: MODELO, generationConfig: { temperature: 0.2, maxOutputTokens: 900, thinkingConfig: { thinkingBudget: 0 } } });
+    const normal = getGenerativeModel(ai, { model: MODELO, generationConfig: { temperature: 0.2, maxOutputTokens: 900 } });
+    async function correr(m, prompt, onChunk){
+      const res = await m.generateContentStream(prompt);
+      let txt = '';
+      for await (const c of res.stream){ txt += c.text(); if(onChunk) onChunk(txt); }
+      return txt;
+    }
+    const minimo = getGenerativeModel(ai, { model: MODELO, generationConfig: { temperature: 0.2, maxOutputTokens: 900, thinkingConfig: { thinkingLevel: 'minimal' } } });
+    window.lexiDiagnostico = async function(log){
+      const med = async (nombre, fn) => { const t=performance.now(); try{ await fn(); log(`${nombre}: ${((performance.now()-t)/1000).toFixed(1)} s`); }catch(e){ log(`${nombre}: ERROR ${((e&&e.message)||e).toString().slice(0,120)} (${((performance.now()-t)/1000).toFixed(1)} s)`); } };
+      await med('1) App Check (token)', ()=>getToken(appCheckAI,false));
+      await med('2) IA modo rápido (thinkingBudget 0)', ()=>rapido.generateContent('Responde solo: OK'));
+      await med('3) IA modo normal', ()=>normal.generateContent('Responde solo: OK'));
+      await med('4) IA pensamiento mínimo', ()=>minimo.generateContent('Responde solo: OK'));
+      await med('5) IA rápido otra vez', ()=>rapido.generateContent('Responde solo: OK'));
+    };
+    const cfgExt = { temperature: 0, maxOutputTokens: 16000, responseMimeType: 'application/json' };
+    const MODELOS_EXT = ["gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash"];
+    const lim = (p, ms) => Promise.race([p, new Promise((_,rj)=>setTimeout(()=>rj(new Error('tardó demasiado')),ms))]);
+    window.extraerConIA = async function(prompt, mime, b64){
+      const partes = [{ text: prompt }, { inlineData: { mimeType: mime, data: b64 } }];
+      let ult;
+      for(let ronda=0; ronda<3; ronda++){
+        for(const nombre of MODELOS_EXT){
+          try{
+            const m = getGenerativeModel(ai, { model: nombre, generationConfig: { ...cfgExt, thinkingConfig: { thinkingBudget: 0 } } });
+            return (await lim(m.generateContent(partes), 25000)).response.text();
+          }catch(e){ ult = e; console.warn('Extractor '+nombre+' falló', e); }
+        }
+        await new Promise(r=>setTimeout(r,2500));
+      }
+      throw ult || new Error('Google no respondió');
+    };
+    let usarRapido = true; window.lexiModo = 'rápido';
+    window.preguntarGemini = async function(prompt, onChunk){
+      if(usarRapido){
+        try{ return await correr(rapido, prompt, onChunk); }
+        catch(e){ console.warn('Modo rápido no disponible, uso modo normal', e); usarRapido = false; window.lexiModo = 'normal (falló rápido: '+((e&&e.message)||e).toString().slice(0,80)+')'; }
+      }
+      return await correr(normal, prompt, onChunk);
+    };
+  }catch(e){ console.error('No se pudo iniciar el asistente', e); window.lexiInitError = e; }
+</script>
+</head>
+<body>
+
+<div class="ambient-grid"></div>
+<div class="ambient-glow"></div>
+
+<!-- HUD HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-logo-wrap">
+      <img src="Captura%20de%20pantalla%202026-07-21%20130706.png" alt="INECC">
+    </div>
+    <div class="brand-divider"></div>
+    <div class="brand-title-group">
+      <div class="brand-super"><span class="live-dot"></span> CGACCE // RJJ09 TELEMETRÍA PATRIMONIAL</div>
+      <div class="brand-title">Coordinación General de Adaptación al Cambio Climático y Ecología</div>
+    </div>
+  </div>
+  <div class="header-controls" id="headerRight">
+    <span id="userDisplay" class="user-pill" style="display:none"></span>
+    <span id="roleBadgeHeader"></span>
+    <button class="btn btn-glass btn-sm" onclick="logout()" id="logoutBtn" style="display:none">Desconectar</button>
+  </div>
+</header>
+
+<!-- SPLASH -->
+<div id="authSplash">
+  <div class="spinner"></div>
+  <span style="font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;color:var(--text-secondary)">INICIALIZANDO ENLACE SEGURO...</span>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none">
+  <video autoplay muted loop playsinline id="loginVideoBg">
+    <source src="login-bg.mp4?v=7" type="video/mp4">
+  </video>
+  <div id="loginOverlay"></div>
+  <div class="login-card">
+    <span class="login-tag">// DAVKARIX SECURITY GATE</span>
+    <h2>Control de Activos</h2>
+    <p>Autenticación requerida para acceder a la matriz patrimonial y generación de etiquetas QR.</p>
+    <div class="form-group">
+      <label>Identificador / Correo</label>
+      <input type="text" id="loginUser" placeholder="correo@ejemplo.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>Clave de Acceso</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:12px;font-size:13.5px;margin-top:6px" onclick="doLogin()">Establecer Sesión</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <video autoplay muted loop playsinline preload="metadata" id="appVideoBg" aria-hidden="true"><source src="login-bg.mp4?v=7" type="video/mp4"></video>
+  <div id="appVideoVeil"></div>
+  <div class="container">
+    <!-- SEGMENTED TABS -->
+    <nav class="nav-dock" id="mainTabs">
+      <button class="tab-btn active" onclick="showTab('inventario')">Matriz de Inventario</button>
+      <button class="tab-btn" onclick="showTab('por-resguardatario')">Resguardatarios</button>
+      <button class="tab-btn" onclick="showTab('qr-codes')" id="tabQR">Etiquetas QR</button>
+      <button class="tab-btn" onclick="showTab('bajas')" id="tabBajas">Bajas / Sin Resguardo</button>
+      <button class="tab-btn" onclick="showTab('mapa')" id="tabMapa">Plano Arquitectónico</button>
+    </nav>
+
+    <!-- INVENTARIO TAB -->
+    <div id="tab-inventario">
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-header"><span class="stat-label">Activos Registrados</span><span class="stat-indicator"></span></div>
+          <div class="stat-num" id="statTotal">304</div>
+        </div>
+        <div class="stat-card cyan">
+          <div class="stat-header"><span class="stat-label">Resguardatarios</span><span class="stat-indicator"></span></div>
+          <div class="stat-num" id="statResguardatarios">0</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-header"><span class="stat-label">Vista Filtrada</span><span class="stat-indicator"></span></div>
+          <div class="stat-num" id="statFiltrados">304</div>
+        </div>
+        <div class="stat-card emerald">
+          <div class="stat-header"><span class="stat-label">Valoración Total</span><span class="stat-indicator"></span></div>
+          <div class="stat-num" id="statValor">$0</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchInput" placeholder="Buscar activo por descripción, inventario, serie, resguardatario o ubicación..." oninput="applyFilters()">
+        </div>
+        <select id="filterResguard" onchange="applyFilters()">
+          <option value="">Todos los resguardatarios</option>
+        </select>
+        <button class="btn btn-glass" onclick="exportExcel()">Exportar XLSX</button>
+        <button class="btn btn-glass" onclick="exportPDF()">Reporte PDF</button>
+        <button class="btn btn-cyan-outline" onclick="exportHTML()" title="Descarga respaldo JSON actualizado">Respaldo JSON</button>
+        <button class="btn btn-primary" onclick="openAddModal()" id="addBtnMain">+ Nuevo Activo</button>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-header-title">Registro Central de Activos</div>
+          <span class="table-meta" id="pageInfo2">Página 1</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Descripción Técnica</th>
+                <th>Clave Inventario</th>
+                <th>N° Serie</th>
+                <th>Resguardatario / Ubicación</th>
+                <th>Fabricante / Modelo</th>
+                <th style="text-align:right">Control</th>
+              </tr>
+            </thead>
+            <tbody id="assetsTable"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+
+    <!-- POR RESGUARDATARIO TAB -->
+    <div id="tab-por-resguardatario" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchResguard" placeholder="Filtrar resguardatario..." oninput="renderResguardatarios()">
+        </div>
+      </div>
+      <div id="resguardatarioList"></div>
+    </div>
+
+    <!-- BAJAS TAB -->
+    <div id="tab-bajas" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchBajas" placeholder="Buscar en archivo de bajas..." oninput="renderBajas()">
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin:0 0 14px 4px">Activos sin resguardatario asignado. Sus códigos QR permanecen activos en la red para reasignación inmediata.</div>
+      <div id="bajasList"></div>
+    </div>
+
+    <!-- MAPA TAB -->
+    <div id="tab-mapa" style="display:none">
+      <div class="toolbar">
+        <span id="mapaEditBar" style="display:none;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="mapaAgregar()">+ Zona / Oficina</button>
+          <button class="btn btn-glass btn-sm" onclick="mapaAgregarMarca()">+ Acceso / Señal</button>
+          <button class="btn btn-glass btn-sm" onclick="mapaAgregarModulos()">+ Lote Módulos</button>
+          <button class="btn btn-cyan-outline btn-sm" id="mapaBtnEdit" onclick="mapaToggleEdit()">Editar Plano</button>
+        </span>
+        <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary)" id="mapaHint">Seleccione una zona del plano para inspeccionar sus activos.</span>
+      </div>
+      <div id="mapaCanvasWrap"><div id="mapaCanvas"></div></div>
+      <div id="mapaSinLugar" style="margin-top:14px"></div>
+    </div>
+
+    <!-- QR CODES TAB -->
+    <div id="tab-qr-codes" style="display:none">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchQR" placeholder="Filtrar etiquetas QR..." oninput="renderQRGrid()">
+        </div>
+        <select id="filterResguardQR" onchange="renderQRGrid()">
+          <option value="">Todos los resguardatarios</option>
+        </select>
+        <button class="btn btn-primary" onclick="printAllQR()">Imprimir Pliego QR</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-header-title">Generador de Etiquetas Estáticas QR</div>
+          <span class="table-meta" id="qrCount">304 códigos</span>
+        </div>
+        <div style="padding:22px">
+          <div id="qrGridContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:16px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN VIEW -->
+<div id="scanView" style="display:none">
+  <div class="container">
+    <div class="scan-card">
+      <div id="scanContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Registrar Activo</h3>
+      <button class="close-btn" onclick="closeModal('addModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Número de inventario *</label>
+          <input type="text" id="f_inventario" placeholder="RJJ09I...">
+        </div>
+        <div class="form-group">
+          <label>N° de bien</label>
+          <input type="text" id="f_numero" placeholder="00001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Descripción *</label>
+        <input type="text" id="f_descripcion" placeholder="Nombre o descripción técnica del activo">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Código resguardatario</label>
+          <input type="text" id="f_codResguard" placeholder="7100001">
+        </div>
+        <div class="form-group">
+          <label>Nombre resguardatario</label>
+          <input type="text" id="f_nombreResguard" placeholder="Nombre completo">
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Marca</label>
+          <input type="text" id="f_marca" placeholder="HP">
+        </div>
+        <div class="form-group">
+          <label>Modelo</label>
+          <input type="text" id="f_modelo" placeholder="LaserJet">
+        </div>
+        <div class="form-group">
+          <label>N° de serie</label>
+          <input type="text" id="f_serie" placeholder="SN001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Ubicación física asignada</label>
+        <input type="text" id="f_ubicacion" list="dl_ubicaciones" placeholder="Ej. Oficina 1, Módulo F5, Sala de juntas" autocomplete="off">
+        <datalist id="dl_ubicaciones"></datalist>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Empleado responsable</label>
+          <input type="text" id="f_empleado" placeholder="7100001">
+        </div>
+        <div class="form-group">
+          <label>Valor de adquisición (MXN)</label>
+          <input type="number" id="f_valor" placeholder="0.00" step="0.01">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-glass" onclick="closeModal('addModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Guardar Registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MAPA -->
+<div class="modal-overlay" id="mapaModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="mapaModalTitle">Zona</h3><button class="close-btn" onclick="closeModal('mapaModal')">×</button></div>
+    <div class="modal-body" id="mapaModalBody"></div>
+    <div class="modal-footer"><button class="btn btn-glass" onclick="closeModal('mapaModal')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Expediente Técnico del Activo</h3>
+      <button class="close-btn" onclick="closeModal('detailModal')">×</button>
+    </div>
+    <div class="modal-body" id="detailContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-glass" onclick="closeModal('detailModal')">Cerrar</button>
+      <button class="btn btn-primary" onclick="editCurrentAsset()" id="editFromDetail">Editar Registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEXI SPHERICAL CORE -->
+<div id="lexiBubble" class="lexi-bubble" title="LEXI AI Core"><div class="lexi-core-ring"></div></div>
+<div id="asistente" class="lexi-window">
+  <div class="lw-head">
+    <div class="lw-left">
+      <div class="lw-avatar"></div>
+      <div>
+        <div class="lw-title">LEXI</div>
+        <div class="lw-sub">NÚCLEO DE INTELIGENCIA PATRIMONIAL</div>
+      </div>
+    </div>
+    <div class="lw-acts">
+      <button class="lw-ib" id="btnVoz" onclick="lexiToggleVoz()" title="Síntesis de voz">🔇</button>
+      <button class="lw-ib" onclick="lexiLimpiar()" title="Reiniciar consola">↺</button>
+      <button class="lw-ib" onclick="lexiToggle(false)" title="Minimizar">✕</button>
+    </div>
+  </div>
+  <div class="lw-body" id="lwBody">
+    <div class="lw-chat" id="chatBox">
+      <div class="lw-msg lw-bot">Enlace neuronal activo. Puedo consultar activos, auditar resguardos, procesar documentos PDF/imagen o ejecutar modificaciones directas en la base de datos.</div>
+    </div>
+    <div class="lw-chips" id="lwChips">
+      <button class="lw-chip" onclick="lexiEjemplo(this)">¿Cuántos bienes hay en total?</button>
+      <button class="lw-chip" onclick="lexiEjemplo(this)">¿Qué laptops tenemos y de quién son?</button>
+      <button class="lw-chip" onclick="lexiEjemplo(this)">Muéstrame los bienes de un resguardatario</button>
+    </div>
+  </div>
+  <div id="lwFile"><span id="lwFileName"></span><button onclick="lexiQuitarArchivo()" title="Quitar">✕</button></div>
+  <input type="file" id="lwFileInput" accept="image/*,application/pdf" style="display:none" onchange="lexiElegirArchivo(this)">
+  <div class="lw-foot">
+    <button class="lw-fb" onclick="document.getElementById('lwFileInput').click()" title="Adjuntar PDF o imagen">📎</button>
+    <input id="chatInput" placeholder="Consultar o adjuntar documento..." onkeydown="if(event.key==='Enter')preguntarIA()">
+    <button class="lw-fb" id="btnMic" onclick="lexiMic()" title="Comando de voz">🎙️</button>
+    <button class="lw-send" onclick="preguntarIA()" title="Ejecutar">➤</button>
+  </div>
+</div>
+
+<!-- MARCA DAVKARIX -->
+<div class="corner-badge"><span class="cb-dk">DK</span><span class="cb-text">Powered by Davkarix</span></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PRINT VIEW -->
+<div id="printView">
+  <h2 style="text-align:center;margin-bottom:16px;font-family:sans-serif;font-size:16px">Códigos QR — Inventario de Activos RJJ09</h2>
+  <div class="qr-grid" id="printQRGrid"></div>
+</div>
+
+<script>
+// ==================== DATA ====================
+// USERS con contraseñas en texto plano eliminado: la autenticación real
+// la maneja Firebase Auth (auth.signInWithEmailAndPassword) y el rol vive
+// en Firestore (colección 'usuarios').
+
+let currentUser = null;
+let currentRole = null;
+let editingId   = null;
+let currentPage = 1;
+const PAGE_SIZE  = 25;
+let filteredData = [];
+
+// Raw assets from xlsx
+let ASSETS = [];
+let MAPA = {salas:[]};
+// ==================== INIT ====================
+function renderAfterLoad(){
+  // Populate resguardatario filters
+  const resguards = getUniqueResguardatarios();
+  ['filterResguard','filterResguardQR'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.querySelectorAll('option:not(:first-child)').forEach(o=>o.remove());
+    resguards.forEach(r=>{
+      const opt = document.createElement('option');
+      opt.value = r; opt.text = r;
+      el.appendChild(opt);
+    });
+  });
+
+  applyFilters();
+  renderResguardatarios();
+  updateStats();
+}
+
+// Escapa texto antes de inyectarlo en innerHTML (previene XSS almacenado/reflejado).
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function cargarDatos(rol){
+  try{
+    const docId = (rol === 'admin' || rol === 'editor') ? 'data' : 'data_publico';
+    const doc = await db.collection('inventario').doc(docId).get();
+    if(doc.exists && doc.data().assets && doc.data().assets.length){
+      ASSETS = doc.data().assets;
+      if(doc.data().mapa && Array.isArray(doc.data().mapa.salas)) MAPA = doc.data().mapa;
+    } else if(docId === 'data'){
+      await db.collection('inventario').doc('data').set({assets: ASSETS});
+    }
+  } catch(e){
+    console.error('Error cargando de Firestore, usando datos locales', e);
+    const saved = localStorage.getItem('activos_rjj09');
+    if(saved) ASSETS = JSON.parse(saved);
+  }
+}
+// Reacciona cuando Firebase restaura o pierde la sesión → la sesión persiste al
+// recargar. Solo un admin autenticado carga y ve los datos.
+auth.onAuthStateChanged(async (user) => {
+  const scanInv = new URLSearchParams(window.location.search).get('scan');
+  if(!user){ mostrarLogin(); return; }
+  try{
+    const roleDoc = await db.collection('usuarios').doc(user.uid).get();
+    currentRole = roleDoc.exists ? roleDoc.data().role : 'consulta';
+  } catch(e){ currentRole = 'consulta'; }
+  currentUser = user.email;
+
+  if(currentRole !== 'admin'){
+    mostrarLogin();
+    showToast('Solo un administrador puede ver el inventario', 'error');
+    return;
+  }
+ await cargarDatos(currentRole);
+  if(scanInv){ showScanView(scanInv); return; }
+  entrarApp();
+  renderAfterLoad();
+});
+
+function mostrarLogin(){
+  currentUser = null; currentRole = null;
+  document.getElementById('authSplash').style.display = 'none';
+  document.getElementById('scanView').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('logoutBtn').style.display = 'none';
+  document.getElementById('userDisplay').style.display = 'none';
+  const lb=document.getElementById('lexiBubble'); if(lb) lb.style.display='none';
+  const lw=document.getElementById('asistente'); if(lw) lw.classList.remove('open');
+}
+
+function entrarApp(){
+  document.getElementById('authSplash').style.display = 'none';
+  document.getElementById('scanView').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = 'inline-flex';
+  const ud = document.getElementById('userDisplay');
+  ud.style.display = 'inline-flex';
+  ud.textContent = currentUser;
+  const roleLabels = {admin:'ADMIN',editor:'EDITOR',consulta:'LECTURA'};
+  const roleColors = {admin:'role-admin',editor:'role-editor',consulta:'role-consulta'};
+  document.getElementById('roleBadgeHeader').innerHTML =
+    `<span class="role-badge ${roleColors[currentRole]}">${roleLabels[currentRole]}</span>`;
+  if(currentRole === 'consulta') document.getElementById('addBtnMain').style.display = 'none';
+  aplicarVisibilidadQR();
+  const lb=document.getElementById('lexiBubble'); if(lb) lb.style.display='flex';
+}
+
+// Solo admin ve la pestaña de códigos QR.
+function aplicarVisibilidadQR(){
+  const tab = document.getElementById('tabQR');
+  if(tab) tab.style.display = currentRole === 'admin' ? 'inline-flex' : 'none';
+}
+
+async function saveToStorage(){
+  try{
+    await db.collection('inventario').doc('data').set({assets: ASSETS, mapa: MAPA});
+    const publico = ASSETS.map(a => {
+      const copia = {...a};
+      delete copia.empleadoResponsable;
+      delete copia.valorAdquisicion;
+      return copia;
+    });
+    await db.collection('inventario').doc('data_publico').set({assets: publico, mapa: MAPA});
+    localStorage.removeItem('activos_rjj09');
+  } catch(e){
+    console.error('Error guardando en Firestore', e);
+    localStorage.setItem('activos_rjj09', JSON.stringify(ASSETS));
+    showToast('Sin conexión: el cambio solo se guardó en este dispositivo', 'error');
+  }
+}
+const EXCEPCIONES_NOMBRE = {
+  'GEMMA ABISAY  ORTIZ': 'GEMMA ABISAY',
+  'JORGE  DAVID MARTINEZ': 'JORGE DAVID',
+  'JUAN  DAVID  TORRES': 'JUAN DAVID',
+  'VICTOR OMAR  MINERO': 'VICTOR OMAR',
+  'XIMENA SARAI  POSADAS': 'XIMENA SARAI',
+  'CELIA  ELIZABETH  PIGUERON': 'CELIA ELIZABETH'
+};
+
+function primerNombre(nombreCompleto){
+  const limpio = nombreCompleto.trim();
+  if(EXCEPCIONES_NOMBRE[limpio]) return EXCEPCIONES_NOMBRE[limpio];
+  const partes = limpio.split(/\s+/).filter(p => p.length > 0);
+  if(partes.length <= 2) return partes[0] || '';
+  return partes.slice(0, partes.length - 2).join(' ');
+}
+function getUniqueResguardatarios(){
+  const names = [...new Set(ASSETS.map(a => a.nombreResguardatario.trim()))].sort();
+  return names.filter(n => n.length > 0);
+}
+
+// ==================== AUTH ====================
+async function doLogin(){
+  const email = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  try{
+    await auth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged se encarga de cargar datos y mostrar la app.
+  } catch(e){
+    showToast('Usuario o contraseña incorrectos', 'error');
+  }
+}
+
+function logout(){
+  auth.signOut();
+  localStorage.removeItem('activos_rjj09');
+  mostrarLogin();
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+// ==================== TABS ====================
+(function(){
+  const v=()=>document.getElementById('appVideoBg');
+  const ahorro=()=>{ try{ return (navigator.connection&&navigator.connection.saveData) || matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } };
+  document.addEventListener('visibilitychange',()=>{ const x=v(); if(!x) return; if(document.hidden||ahorro()) x.pause(); else x.play().catch(()=>{}); });
+  window.addEventListener('load',()=>{ const x=v(); if(x&&ahorro()) x.pause(); });
+})();
+function showTab(tab){
+  ['inventario','por-resguardatario','qr-codes','bajas','mapa'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active', i === ['inventario','por-resguardatario','qr-codes','bajas','mapa'].indexOf(tab));
+  });
+  if(tab === 'qr-codes') renderQRGrid();
+  if(tab === 'por-resguardatario') renderResguardatarios();
+  if(tab === 'bajas') renderBajas();
+  if(tab === 'mapa') renderMapa();
+}
+
+// ==================== FILTERS + TABLE ====================
+function applyFilters(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguard').value||'').toLowerCase();
+  
+  filteredData = ASSETS.filter(a => {
+    if(a.baja) return false;
+    const matchQ = !q || 
+      (a.descripcion||'').toLowerCase().includes(q) ||
+      (a.inventario||'').toLowerCase().includes(q) ||
+      (a.serie||'').toLowerCase().includes(q) ||
+      (a.nombreResguardatario||'').toLowerCase().includes(q) ||
+      (a.numero||'').toLowerCase().includes(q) ||
+      (a.ubicacion||'').toLowerCase().includes(q) ||
+      (a.marca||'').toLowerCase().includes(q);
+    const matchR = !resguard || (a.nombreResguardatario||'').toLowerCase().includes(resguard);
+    return matchQ && matchR;
+  });
+  
+  currentPage = 1;
+  renderTable();
+  updateStats();
+}
+
+function renderTable(){
+  const tbody = document.getElementById('assetsTable');
+  const start = (currentPage-1) * PAGE_SIZE;
+  const page = filteredData.slice(start, start + PAGE_SIZE);
+  
+  tbody.innerHTML = page.map(a => `
+    <tr>
+      <td class="num-cell">${esc(a.numero)}</td>
+      <td class="desc-cell">
+        <span class="desc-text">${esc(a.descripcion)}</span>
+        <span class="desc-sub">${esc(a.marca)} ${a.modelo !== 'SM' ? '· '+esc(a.modelo) : ''}</span>
+      </td>
+      <td><span class="inv-badge">${esc(a.inventario.substring(0,22))}</span></td>
+      <td class="serie-cell">${a.serie !== 'SN' ? esc(a.serie) : '—'}</td>
+      <td>
+        <div class="resguard-name">${esc(a.nombreResguardatario.trim())}</div>
+        <div class="resguard-code">${esc(a.codResguardatario)}</div>
+        ${a.ubicacion?`<div class="loc-tag">⌖ ${esc(a.ubicacion)}</div>`:''}
+      </td>
+      <td style="font-size:12px">${esc(a.marca)}<br><span style="color:var(--text-secondary)">${esc(a.modelo)}</span></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-glass btn-sm btn-icon" onclick="showDetail(${a.id})" title="Inspeccionar ficha">👁</button>
+          ${canEdit() ? `<button class="btn btn-glass btn-sm btn-icon" onclick="openEditModal(${a.id})" title="Editar">✎</button>` : ''}
+          ${currentRole === 'admin' ? `<button class="btn btn-danger btn-sm btn-icon" onclick="deleteAsset(${a.id})" title="Eliminar">✕</button>` : ''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+  
+  renderPagination();
+}
+
+function renderPagination(){
+  const total = filteredData.length;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pag = document.getElementById('pagination');
+  const pi = document.getElementById('pageInfo2');
+  if(pi) pi.textContent = `${total} REGISTROS`;
+  
+  if(pages <= 1){ pag.innerHTML = ''; return; }
+  
+  let html = '';
+  if(currentPage > 1) html += `<button class="page-btn" onclick="goPage(${currentPage-1})">←</button>`;
+  
+  const start = Math.max(1, currentPage-2);
+  const end   = Math.min(pages, currentPage+2);
+  for(let i=start;i<=end;i++) html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  
+  if(currentPage < pages) html += `<button class="page-btn" onclick="goPage(${currentPage+1})">→</button>`;
+  html += `<span class="page-info">PÁG ${currentPage} / ${pages}</span>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p){ currentPage=p; renderTable(); window.scrollTo(0,0); }
+
+function updateStats(){
+  const ACT = ASSETS.filter(a=>!a.baja);
+  const total  = ACT.length;
+  const resgs  = new Set(ACT.map(a=>a.nombreResguardatario.trim()).filter(Boolean)).size;
+  const valor  = ACT.reduce((s,a)=>s+(a.valorAdquisicion||0),0);
+  const tb=document.getElementById('tabBajas'); if(tb){ const nb=ASSETS.length-ACT.length; tb.textContent='Bajas / Sin Resguardo'+(nb?' ('+nb+')':''); }
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statResguardatarios').textContent = resgs;
+  document.getElementById('statFiltrados').textContent = filteredData.length || total;
+  document.getElementById('statValor').textContent = '$'+Math.round(valor).toLocaleString('es-MX');
+}
+
+// ==================== RESGUARDATARIOS VIEW ====================
+function toggleGroup(el){
+  const body = el.nextElementSibling;
+  if(body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderResguardatarios(){
+  const q = (document.getElementById('searchResguard').value||'').toLowerCase();
+  const byPerson = {};
+  ASSETS.forEach(a=>{
+    if(a.baja) return;
+    const name = a.nombreResguardatario.trim();
+    if(!byPerson[name]) byPerson[name] = [];
+    byPerson[name].push(a);
+  });
+  
+  const sorted = Object.keys(byPerson).sort().filter(n => !q || n.toLowerCase().includes(q));
+  
+  const container = document.getElementById('resguardatarioList');
+  container.innerHTML = sorted.map(name => {
+    const items = byPerson[name];
+    const valor = items.reduce((s,a)=>s+(a.valorAdquisicion||0),0);
+    return `
+      <div class="group-card">
+        <div class="group-head" onclick="toggleGroup(this)">
+          <div>
+            <strong style="font-size:14px;color:var(--text-primary)">${esc(name)}</strong>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent-turquesa);margin-left:10px">${esc(items[0].codResguardatario)}</span>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--text-secondary)">${items.length} ACTIVOS</span>
+            ${valor > 0 ? `<span style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--accent-emerald)">$${Math.round(valor).toLocaleString('es-MX')}</span>` : ''}
+            <span style="color:var(--text-secondary);font-size:11px">▼</span>
+          </div>
+        </div>
+        <div class="group-items">
+          ${items.map(a => `
+            <div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <span style="font-family:var(--font-mono);font-weight:600;color:var(--accent-turquesa);font-size:11.5px;margin-right:10px">${esc(a.numero)}</span>
+                <span style="font-size:13px;color:var(--text-primary)">${esc(a.descripcion)}</span>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;font-family:var(--font-mono)">${esc(a.inventario)}</div>
+              </div>
+              <button class="btn btn-glass btn-sm" onclick="showDetail(${a.id})">Inspeccionar</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+// ==================== QR GRID ====================
+function renderQRGrid(){
+  const q = (document.getElementById('searchQR').value||'').toLowerCase();
+  const resguard = (document.getElementById('filterResguardQR').value||'').toLowerCase();
+  
+  const data = ASSETS.filter(a => {
+    const matchQ = !q || a.descripcion.toLowerCase().includes(q) || a.inventario.toLowerCase().includes(q) || a.numero.includes(q);
+    const matchR = !resguard || a.nombreResguardatario.toLowerCase().includes(resguard);
+    return matchQ && matchR;
+  }).slice(0, 60);
+  
+  document.getElementById('qrCount').textContent = `${data.length} ETIQUETAS EN VISTA`;
+  
+  const container = document.getElementById('qrGridContainer');
+  container.innerHTML = '';
+  
+  data.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'qr-preview-card';
+    
+    const frame = document.createElement('div');
+    frame.className = 'qr-white-frame';
+    const qrDiv = document.createElement('div');
+    qrDiv.id = 'qr_'+a.id;
+    frame.appendChild(qrDiv);
+    card.appendChild(frame);
+    
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:9.5px;font-family:var(--font-mono);color:var(--accent-cyan);margin-top:4px;word-break:break-all';
+    label.textContent = a.inventario;
+    card.appendChild(label);
+    
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:11px;font-weight:500;color:var(--text-primary);margin-top:4px;line-height:1.25';
+    desc.textContent = a.descripcion.substring(0,40) + (a.descripcion.length>40?'…':'');
+    card.appendChild(desc);
+    
+    const num = document.createElement('div');
+    num.style.cssText = 'font-family:var(--font-mono);font-size:10px;color:var(--accent-turquesa);font-weight:700;margin-top:4px';
+    num.textContent = 'N° '+a.numero;
+    card.appendChild(num);
+    
+    container.appendChild(card);
+    
+    setTimeout(() => {
+      try {
+        new QRCode(qrDiv, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#071A2B', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+    }, 50);
+  });
+}
+
+// ==================== DETAIL VIEW ====================
+let detailAssetId = null;
+
+function showDetail(id){
+  const a = ASSETS.find(x => x.id === id);
+  if(!a) return;
+  detailAssetId = id;
+  
+  const qrUrl = window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario);
+  
+  document.getElementById('detailContent').innerHTML = `
+    <div class="asset-detail-header">
+      <div style="flex:1">
+        <div class="inv-badge" style="margin-bottom:10px">${esc(a.inventario)}</div>
+        <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:6px">${esc(a.descripcion)}</h2>
+        <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)">REGISTRO N° <strong style="color:var(--accent-turquesa)">${esc(a.numero)}</strong></div>
+      </div>
+      <div class="asset-qr-box">
+        <div id="detail_qr" style="display:inline-block"></div>
+        <div class="qr-label">ESCANEAR FICHA</div>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-item">
+        <label>Resguardatario</label>
+        <span>${esc(a.nombreResguardatario.trim())}</span>
+      </div>
+      <div class="detail-item">
+        <label>Código resguardatario</label>
+        <span style="font-family:var(--font-mono)">${esc(a.codResguardatario)}</span>
+      </div>
+      <div class="detail-item">
+        <label>Empleado responsable</label>
+        <span>${esc(a.empleadoResponsable || '—')}</span>
+      </div>
+      <div class="detail-item">
+        <label>N° de serie</label>
+        <span style="font-family:var(--font-mono)">${a.serie !== 'SN' ? esc(a.serie) : 'Sin número'}</span>
+      </div>
+      <div class="detail-item">
+        <label>Fabricante / Marca</label>
+        <span>${esc(a.marca)}</span>
+      </div>
+      <div class="detail-item">
+        <label>Modelo</label>
+        <span>${esc(a.modelo)}</span>
+      </div>
+      <div class="detail-item">
+        <label>Ubicación física</label>
+        <span style="color:var(--accent-turquesa)">${esc(a.ubicacion || 'No asignada')}</span>
+      </div>
+      <div class="detail-item">
+        <label>Almacén</label>
+        <span>${esc(a.almacen || '—')}</span>
+      </div>
+      <div class="detail-item" style="grid-column:1 / -1">
+        <label>Valor de adquisición</label>
+        <span style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--accent-emerald)">$${(a.valorAdquisicion||0).toLocaleString('es-MX',{minimumFractionDigits:2})} MXN</span>
+      </div>
+    </div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-hairline)">
+      <label style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px">Enlace Estático QR</label>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--accent-cyan);background:rgba(3,7,17,0.7);border:1px solid var(--border-hairline);padding:10px;border-radius:6px;margin-top:6px;word-break:break-all">${esc(qrUrl)}</div>
+    </div>
+  `;
+  
+  openModal('detailModal');
+  
+  setTimeout(() => {
+    try {
+      new QRCode(document.getElementById('detail_qr'), {
+        text: qrUrl,
+        width: 116, height: 116,
+        colorDark:'#071A2B', colorLight:'#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e){}
+  }, 100);
+  
+  document.getElementById('editFromDetail').style.display = canEdit() ? 'inline-flex' : 'none';
+}
+
+function editCurrentAsset(){
+  closeModal('detailModal');
+  openEditModal(detailAssetId);
+}
+
+// ==================== ADD/EDIT MODAL ====================
+function canEdit(){ return currentRole === 'admin' || currentRole === 'editor'; }
+
+function llenarUbicaciones(){
+  const u=[...new Set(ASSETS.map(a=>(a.ubicacion||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+  const html=u.map(x=>`<option value="${esc(x)}">`).join('');
+  ['dl_ubicaciones','dl_ubic_scan'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; });
+}
+function openAddModal(){
+  llenarUbicaciones();
+  if(!canEdit()){ showToast('Sin permisos de edición', 'error'); return; }
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Agregar nuevo bien';
+  ['f_inventario','f_numero','f_descripcion','f_codResguard','f_nombreResguard','f_marca','f_modelo','f_serie','f_empleado','f_ubicacion'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_valor').value = '0';
+  openModal('addModal');
+}
+
+function openEditModal(id){
+  if(!canEdit()){ showToast('Sin permisos de edición', 'error'); return; }
+  llenarUbicaciones();
+  const a = ASSETS.find(x => x.id === id);
+  if(!a) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar bien — ' + a.numero;
+  document.getElementById('f_inventario').value = a.inventario;
+  document.getElementById('f_numero').value = a.numero;
+  document.getElementById('f_descripcion').value = a.descripcion;
+  document.getElementById('f_codResguard').value = a.codResguardatario;
+  document.getElementById('f_nombreResguard').value = a.nombreResguardatario;
+  document.getElementById('f_marca').value = a.marca;
+  document.getElementById('f_modelo').value = a.modelo;
+  document.getElementById('f_serie').value = a.serie;
+  document.getElementById('f_empleado').value = a.empleadoResponsable;
+  document.getElementById('f_ubicacion').value = a.ubicacion || '';
+  document.getElementById('f_valor').value = a.valorAdquisicion;
+  openModal('addModal');
+}
+
+function saveAsset(){
+  const inventario = document.getElementById('f_inventario').value.trim();
+  const descripcion = document.getElementById('f_descripcion').value.trim();
+  if(!inventario || !descripcion){ showToast('Complete los campos obligatorios', 'error'); return; }
+  
+  const data = {
+    inventario,
+    numero: document.getElementById('f_numero').value.trim(),
+    descripcion,
+    codResguardatario: document.getElementById('f_codResguard').value.trim(),
+    nombreResguardatario: document.getElementById('f_nombreResguard').value.trim(),
+    marca: document.getElementById('f_marca').value.trim() || 'SM',
+    modelo: document.getElementById('f_modelo').value.trim() || 'SM',
+    serie: document.getElementById('f_serie').value.trim() || 'SN',
+    empleadoResponsable: document.getElementById('f_empleado').value.trim(),
+    ubicacion: document.getElementById('f_ubicacion').value.trim(),
+    valorAdquisicion: parseFloat(document.getElementById('f_valor').value) || 0,
+    almacen: '400'
+  };
+  
+  if(editingId){
+    const idx = ASSETS.findIndex(x => x.id === editingId);
+    if(idx >= 0) ASSETS[idx] = {...ASSETS[idx], ...data};
+    showToast('Bien actualizado', 'success');
+  } else {
+    const newId = Math.max(...ASSETS.map(a=>a.id)) + 1;
+    ASSETS.push({id: newId, ...data});
+    showToast('Bien agregado', 'success');
+  }
+  
+  saveToStorage();
+  closeModal('addModal');
+  applyFilters();
+  updateStats();
+  
+  // Update resguard filter options
+  const resguards = getUniqueResguardatarios();
+  ['filterResguard','filterResguardQR'].forEach(fid => {
+    const el = document.getElementById(fid);
+    if(!el) return;
+    const current = el.value;
+    while(el.options.length > 1) el.remove(1);
+    resguards.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.text = r;
+      el.appendChild(opt);
+    });
+    el.value = current;
+  });
+}
+
+function deleteAsset(id){
+  if(currentRole !== 'admin'){ showToast('Solo el administrador puede eliminar', 'error'); return; }
+  if(!confirm('¿Eliminar este bien del inventario? Esta acción no se puede deshacer.')) return;
+  ASSETS = ASSETS.filter(a => a.id !== id);
+  saveToStorage();
+  applyFilters();
+  updateStats();
+  showToast('Bien eliminado', 'success');
+}
+
+// ==================== SCAN VIEW ====================
+function showScanView(inventario){
+  document.getElementById('authSplash').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('scanView').style.display = 'block';
+
+  if(!auth.currentUser || currentRole !== 'admin'){
+    document.getElementById('scanContent').innerHTML =
+      '<p style="text-align:center;padding:20px;color:var(--text-secondary)">Inicia sesión como administrador para inspeccionar este activo.</p>';
+    return;
+  }
+
+  const asset = ASSETS.find(a => a.inventario === inventario);
+
+  if(!asset){
+    document.getElementById('scanContent').innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <h2 style="color:var(--accent-crimson);margin-bottom:8px;font-family:var(--font-display)">Activo no localizado</h2>
+        <p style="color:var(--text-secondary);font-size:13px">Clave consultada: <strong>${esc(inventario)}</strong></p>
+        <a href="${esc(window.location.pathname)}" class="btn btn-primary" style="margin-top:18px;text-decoration:none">← Volver a la Matriz</a>
+      </div>`;
+    return;
+  }
+  
+  window.__scanTpl = true;
+  document.getElementById('scanContent').innerHTML = `
+    <div style="text-align:center;padding-bottom:10px">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent-turquesa);letter-spacing:1.5px;text-transform:uppercase">TERMINAL DE VERIFICACIÓN // RJJ09</div>
+    </div>
+    <div style="background:linear-gradient(135deg, rgba(0,184,169,0.2), rgba(7,26,43,0.9));border:1px solid var(--border-glow);border-radius:12px;padding:18px;margin:12px 0;text-align:center">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent-turquesa);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Resguardatario Asignado</div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:#fff">${esc(primerNombre(asset.nombreResguardatario))}</div>
+    </div>
+    ${asset.ubicacion?`<div style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.3);border-radius:10px;padding:10px 14px;margin-bottom:12px;text-align:center"><div style="font-family:var(--font-mono);font-size:10px;color:var(--accent-cyan);text-transform:uppercase">Ubicación Actual</div><div style="font-size:15px;font-weight:600;color:#fff;margin-top:2px">${esc(asset.ubicacion)}</div></div>`:''}
+    <div style="background:rgba(3,7,17,0.6);border:1px solid var(--border-hairline);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Descripción del Bien</div>
+      <div style="font-size:16px;font-weight:600;color:#fff;line-height:1.3">${esc(asset.descripcion)}</div>
+      <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--accent-turquesa);margin-top:6px">N° ${esc(asset.numero)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="detail-item"><label>Marca</label><span>${esc(asset.marca)}</span></div>
+      <div class="detail-item"><label>Modelo</label><span>${esc(asset.modelo)}</span></div>
+      <div class="detail-item" style="grid-column:1 / -1"><label>N° Serie</label><span style="font-family:var(--font-mono)">${asset.serie !== 'SN' ? esc(asset.serie) : '—'}</span></div>
+    </div>
+    <div class="detail-item" style="margin-bottom:16px">
+      <label>Clave de Inventario</label>
+      <span style="font-family:var(--font-mono);font-size:12px;color:var(--accent-cyan);word-break:break-all">${esc(asset.inventario)}</span>
+    </div>
+    ${canEdit()?`<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-family:var(--font-mono);font-size:10.5px;font-weight:600;color:var(--accent-amber);text-transform:uppercase;margin-bottom:10px">Actualización Rápida en Campo</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Ubicación</label>
+        <input type="text" id="scan_ubi" list="dl_ubic_scan" value="${esc(asset.ubicacion||'')}" placeholder="Ej. Oficina 1, Módulo F5" autocomplete="off">
+        <datalist id="dl_ubic_scan"></datalist>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Resguardante</label>
+        <input type="text" id="scan_res" list="dl_res_scan" value="${esc((asset.nombreResguardatario||'').trim())}" placeholder="Nombre completo" autocomplete="off" style="text-transform:uppercase">
+        <datalist id="dl_res_scan">${getUniqueResguardatarios().map(r=>`<option value="${esc(r)}">`).join('')}</datalist>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="scanGuardar('${esc(asset.inventario)}')">Actualizar Datos</button>
+    </div>`:''}
+    <div style="text-align:center;padding-top:10px;border-top:1px solid var(--border-hairline)">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-secondary)">VERIFICADO: ${new Date().toLocaleString('es-MX')}</div>
+      <a href="${esc(window.location.pathname)}" style="display:inline-block;margin-top:8px;font-size:12px;color:var(--accent-turquesa);text-decoration:none">← Ir al Panel Principal</a>
+    </div>
+  `;
+  llenarUbicaciones();
+}
+
+async function scanGuardar(inv){
+  if(!canEdit()){ showToast('Sin permisos de edición','error'); return; }
+  const a=ASSETS.find(x=>x.inventario===inv); if(!a) return;
+  const ubi=(document.getElementById('scan_ubi').value||'').trim();
+  const nom=(document.getElementById('scan_res').value||'').trim().replace(/\s+/g,' ').toUpperCase();
+  const actual=(a.nombreResguardatario||'').trim();
+  if(!nom){ showToast('Escribe el nombre del resguardante','error'); return; }
+  if(nom!==actual){
+    const ref=ASSETS.find(x=>!x.baja&&(x.nombreResguardatario||'').trim()===nom);
+    if(!ref && !confirm('"'+nom+'" no existe como resguardante todavía. ¿Lo creo y le asigno este bien?')) return;
+    if(!ref && !confirm('Se quitará este bien a "'+actual+'" y quedará a nombre de "'+nom+'". ¿Confirmas?')) return;
+    if(ref && !confirm('Pasar este bien de "'+actual+'" a "'+nom+'"?')) return;
+    a.nombreResguardatario=nom; a.codResguardatario=ref?(ref.codResguardatario||''):'';
+    delete a.baja; delete a.bajaDe; delete a.fechaBaja;
+  }
+  a.ubicacion=ubi;
+  try{ await saveToStorage(); showToast('Guardado','success'); }catch(e){ showToast('No se pudo guardar','error'); }
+  showScanView(inv);
+}
+
+// ==================== MAPA DEL PISO ====================
+let mapaEdit = false;
+function mapaNorm(t){ return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim(); }
+function mapaToks(t){ return mapaNorm(t).split(' ').filter(Boolean); }
+// Asigna cada bien al lugar que mejor coincide (palabras sin importar el orden)
+function mapaAsignar(){
+  const asig = new Map();
+  const salas = MAPA.salas.filter(r=>r.t!=='mk').map(r=>({r,t:mapaToks(r.nombre)})).filter(x=>x.t.length);
+  ASSETS.forEach(a=>{
+    if(a.baja || !a.ubicacion) return;
+    const u = mapaToks(a.ubicacion); if(!u.length) return;
+    const uset = new Set(u); let best=null, bs=0;
+    salas.forEach(({r,t})=>{
+      const tset = new Set(t);
+      const roomIn = t.every(w=>uset.has(w));          // todas las palabras del lugar están en la ubicación
+      const ubiIn  = u.every(w=>tset.has(w));           // la ubicación es parte del nombre del lugar
+      let sc = 0;
+      if(roomIn && ubiIn) sc = 100 + t.length;          // igual
+      else if(roomIn) sc = t.length;
+      else if(ubiIn) sc = u.length - 0.5;
+      if(sc > bs){ bs = sc; best = r; }
+    });
+    if(best) asig.set(a, best.id);
+  });
+  return asig;
+}
+let MAPA_ASIG = new Map();
+function mapaBienes(sala){ return ASSETS.filter(a=>MAPA_ASIG.get(a)===sala.id); }
+function renderMapa(){
+  MAPA_ASIG = mapaAsignar();
+  const bar=document.getElementById('mapaEditBar'); if(bar) bar.style.display = canEdit()?'inline-flex':'none';
+  const cv=document.getElementById('mapaCanvas'); if(!cv) return;
+  cv.className='mapaC';
+  if(!MAPA.salas.length){
+    cv.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--text-secondary);font-size:13.5px">${canEdit()?'Plano arquitectónico sin zonas definidas. Seleccione "+ Zona / Oficina" para comenzar.':'Aún no hay plano capturado.'}</div>`;
+  } else {
+    cv.innerHTML = MAPA.salas.map(r=>{
+      if(r.t==='mk'){
+        const ic = MK_ICON[r.k]||'⌖';
+        return `<div class="mapaR mk mk-${esc(r.k||'')}${mapaEdit?' edit':''}" data-id="${esc(r.id)}" style="left:${r.x}%;top:${r.y}%;width:${r.w}%;height:${r.h}%"><b>${ic} ${esc(r.nombre)}</b>${mapaEdit?'<div class="mapaH"></div>':''}</div>`;
+      }
+      const n = mapaBienes(r).length;
+      return `<div class="mapaR${r.t==='mod'?' mod':''}${r.t==='ejec'?' ejec':''}${n?'':' vacio'}${mapaEdit?' edit':''}" data-id="${esc(r.id)}" style="left:${r.x}%;top:${r.y}%;width:${r.w}%;height:${r.h}%"><b>${esc(r.nombre)}</b><span>${n} ACTIVO${n===1?'':'S'}</span>${mapaEdit?'<div class="mapaH"></div>':''}</div>`;
+    }).join('');
+  }
+  const usadas = {}; ASSETS.forEach(a=>{ if(!a.baja && a.ubicacion){ const k=mapaNorm(a.ubicacion); usadas[k]=(usadas[k]||0)+1; } });
+  const colocadas = new Set(); ASSETS.forEach(a=>{ if(MAPA_ASIG.has(a)) colocadas.add(mapaNorm(a.ubicacion)); });
+  const sin = Object.keys(usadas).filter(k=>!colocadas.has(k));
+  const box=document.getElementById('mapaSinLugar');
+  box.innerHTML = sin.length ? `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);margin-bottom:8px">UBICACIONES PENDIENTES DE MAPEAR:</div>`+sin.map(k=>`<span style="display:inline-flex;align-items:center;gap:6px;margin:2px 6px 2px 0;padding:5px 12px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:var(--accent-amber);border-radius:16px;font-family:var(--font-mono);font-size:11px">${esc(k)} (${usadas[k]})${canEdit()?` <a href="#" onclick="mapaAgregar('${esc(k).replace(/'/g,'')}');return false" style="color:var(--text-primary);font-weight:700;text-decoration:none">+ Mapear</a>`:''}</span>`).join('') : '';
+  document.getElementById('mapaHint').textContent = mapaEdit ? 'Arrastre los bloques para posicionar o redimensione desde la esquina inferior derecha.' : 'Seleccione una zona del plano para inspeccionar sus activos.';
+  const b=document.getElementById('mapaBtnEdit'); if(b) b.textContent = mapaEdit?'Guardar Plano':'Editar Plano';
+}
+function mapaToggleEdit(){ mapaEdit=!mapaEdit; if(!mapaEdit) mapaGuardar(); renderMapa(); }
+async function mapaGuardar(){ try{ await saveToStorage(); showToast('Plano guardado','success'); }catch(e){ showToast('No se pudo guardar','error'); } }
+function mapaAgregar(nombre){
+  if(!canEdit()) return;
+  nombre = nombre || prompt('Nombre del lugar (ej. MODULO F5, OFICINA 1):');
+  if(!nombre || !nombre.trim()) return;
+  const n = MAPA.salas.length;
+  MAPA.salas.push({id:'s'+Date.now().toString(36)+n, nombre:nombre.trim().toUpperCase(), x:4+(n%5)*18, y:4+Math.floor(n/5)*20, w:16, h:16});
+  mapaEdit=true; renderMapa();
+}
+const MK_ICON={principal:'🚪',emerg:'🏃',escalera:'🪜',bano:'🚻',extintor:'🧯',elevador:'🛗',otra:'📍'};
+function mapaAgregarMarca(){
+  if(!canEdit()) return;
+  const op = prompt('¿Qué quieres poner?\n1 = Entrada principal\n2 = Salida de emergencia\n3 = Extintor\n4 = Otra (tú le pones nombre)','1');
+  const m = {'1':['principal','ENTRADA PRINCIPAL'],'2':['emerg','SALIDA DE EMERGENCIA'],'3':['extintor','EXTINTOR']}[op];
+  let k, nombre;
+  if(m){ k=m[0]; nombre=m[1]; }
+  else if(op==='4'){ nombre=(prompt('Nombre de la señal:')||'').trim().toUpperCase(); if(!nombre) return; k='otra'; }
+  else return;
+  const n = MAPA.salas.filter(r=>r.t==='mk').length;
+  MAPA.salas.push({id:'k'+Date.now().toString(36)+n, t:'mk', k, nombre, x:40+(n%4)*4, y:80-(n%4)*3, w:14, h:7});
+  mapaEdit=true; renderMapa();
+  showToast('Arrástrala a su lugar y toca “Listo”','success');
+}
+function mapaAgregarModulos(){
+  if(!canEdit()) return;
+  const t = prompt('¿Qué vas a agregar?\n1 = Módulos\n2 = Módulos ejecutivos','1');
+  if(t!=='1' && t!=='2') return;
+  const lista = prompt('Escribe los nombres separados por coma.\nEj: F1, F2, F3, F4, F5\n(se les pone “MODULO” o “MODULO EJECUTIVO” solos)','');
+  if(!lista) return;
+  const pref = t==='1' ? 'MODULO ' : 'MODULO EJECUTIVO ';
+  const nombres = lista.split(/[,;\n]+/).map(x=>x.trim().toUpperCase()).filter(Boolean);
+  let k = MAPA.salas.filter(r=>r.t==='mod'||r.t==='ejec').length;
+  nombres.forEach(n=>{
+    const nombre = /^MODULO/.test(mapaNorm(n)) ? n : pref+n;
+    if(MAPA.salas.some(r=>mapaNorm(r.nombre)===mapaNorm(nombre))) return;
+    MAPA.salas.push({id:'m'+Date.now().toString(36)+(k++), t:t==='1'?'mod':'ejec', nombre, x:24+((k-1)%6)*9, y:40+Math.floor((k-1)/6)*11, w:8.5, h:9});
+  });
+  mapaEdit=true; renderMapa();
+  showToast('Acomódalos con el dedo o mouse y toca “Listo”','success');
+}
+function mapaAbrir(id){
+  const r = MAPA.salas.find(x=>x.id===id); if(!r) return;
+  if(r.t==='mk'){
+    document.getElementById('mapaModalTitle').textContent = (MK_ICON[r.k]||'⌖')+' '+r.nombre;
+    document.getElementById('mapaModalBody').innerHTML = canEdit() ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-glass" onclick="mapaRenombrar('${esc(r.id)}')">Renombrar</button><button class="btn btn-danger" onclick="mapaQuitar('${esc(r.id)}')">Eliminar del Plano</button></div>` : '<div style="color:var(--text-secondary);font-size:13px">Marcador arquitectónico.</div>';
+    document.getElementById('mapaModal').classList.add('open'); return;
+  }
+  const lista = mapaBienes(r);
+  document.getElementById('mapaModalTitle').textContent = 'ZONA // '+r.nombre;
+  let h = lista.length ? lista.map(a=>`<div style="padding:10px 0;border-bottom:1px solid var(--border-hairline)"><div style="font-weight:600;font-size:13px;color:var(--text-primary)">${esc(a.descripcion||'')}</div><div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);margin-top:3px">${esc(a.inventario)} · ${esc((a.nombreResguardatario||'').trim()||'SIN RESGUARDO')}</div></div>`).join('') : '<div style="color:var(--text-secondary);font-size:13px">No existen activos registrados en esta ubicación.</div>';
+  if(canEdit()) h += `<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-glass" onclick="mapaRenombrar('${esc(r.id)}')">Renombrar Zona</button><button class="btn btn-danger" onclick="mapaQuitar('${esc(r.id)}')">Remover del Plano</button></div>`;
+  document.getElementById('mapaModalBody').innerHTML = h;
+  document.getElementById('mapaModal').classList.add('open');
+}
+async function mapaRenombrar(id){ const r=MAPA.salas.find(x=>x.id===id); const n=prompt('Nuevo nombre:',r.nombre); if(!n||!n.trim()) return; r.nombre=n.trim().toUpperCase(); closeModal('mapaModal'); await mapaGuardar(); renderMapa(); }
+async function mapaQuitar(id){ if(!confirm('¿Remover este bloque del plano?')) return; MAPA.salas=MAPA.salas.filter(x=>x.id!==id); closeModal('mapaModal'); await mapaGuardar(); renderMapa(); }
+(function(){
+  let drag=null;
+  const cv=()=>document.getElementById('mapaCanvas');
+  document.addEventListener('pointerdown',e=>{
+    const el=e.target.closest&&e.target.closest('.mapaR'); if(!el||!cv()||!cv().contains(el)) return;
+    if(!mapaEdit){ mapaAbrir(el.dataset.id); return; }
+    const r=MAPA.salas.find(x=>x.id===el.dataset.id); if(!r) return;
+    const box=cv().getBoundingClientRect();
+    drag={r,el,mode:e.target.classList.contains('mapaH')?'size':'move',sx:e.clientX,sy:e.clientY,ox:r.x,oy:r.y,ow:r.w,oh:r.h,bw:box.width,bh:box.height};
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove',e=>{
+    if(!drag) return;
+    const dx=(e.clientX-drag.sx)/drag.bw*100, dy=(e.clientY-drag.sy)/drag.bh*100, r=drag.r;
+    if(drag.mode==='move'){ r.x=Math.max(0,Math.min(100-r.w,drag.ox+dx)); r.y=Math.max(0,Math.min(100-r.h,drag.oy+dy)); }
+    else { r.w=Math.max(6,Math.min(100-r.x,drag.ow+dx)); r.h=Math.max(6,Math.min(100-r.y,drag.oh+dy)); }
+    r.x=Math.round(r.x*10)/10; r.y=Math.round(r.y*10)/10; r.w=Math.round(r.w*10)/10; r.h=Math.round(r.h*10)/10;
+    drag.el.style.left=r.x+'%'; drag.el.style.top=r.y+'%'; drag.el.style.width=r.w+'%'; drag.el.style.height=r.h+'%';
+  });
+  const fin=()=>{ drag=null; };
+  document.addEventListener('pointerup',fin); document.addEventListener('pointercancel',fin);
+})();
+
+// ==================== EXPORT HTML ====================
+function exportHTML(){
+  // Build a data-only JSON file instead
+  const data = {assets: ASSETS, exported: new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'activos_rjj09_backup.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Datos exportados — manda este archivo para actualizar el sitio', 'success');
+}
+
+// ==================== EXPORT ====================
+function exportOrdenado(){
+  const g={};
+  filteredData.forEach(a=>{ const n=(a.nombreResguardatario||'').trim()||'SIN RESGUARDANTE'; (g[n]=g[n]||[]).push(a); });
+  const num=a=>{ const n=parseInt(a.numero,10); return isNaN(n)?1e9:n; };
+  return Object.keys(g).sort((x,y)=>x.localeCompare(y,'es')).map(n=>({nombre:n,items:g[n].sort((p,q)=>num(p)-num(q)||String(p.inventario).localeCompare(String(q.inventario))),valor:g[n].reduce((t,a)=>t+(a.valorAdquisicion||0),0)}));
+}
+function exportExcel(){
+  const enc=['N°','Descripción','No. Inventario','Cód. Resguardatario','Nombre Resguardatario','Ubicación','Empleado Responsable','Marca','Modelo','N° Serie','Valor Adquisición','Almacén'];
+  const filas=[enc];
+  exportOrdenado().forEach((p,i)=>{
+    if(i>0) filas.push([]);
+    filas.push([p.nombre.toUpperCase()+'  —  '+p.items.length+' bien(es)  —  Total $'+Math.round(p.valor).toLocaleString('es-MX')]);
+    p.items.forEach(a=>filas.push([a.numero,a.descripcion,a.inventario,a.codResguardatario,(a.nombreResguardatario||'').trim(),a.ubicacion||'',a.empleadoResponsable,a.marca,a.modelo,a.serie,a.valorAdquisicion,a.almacen]));
+  });
+  const ws = XLSX.utils.aoa_to_sheet(filas);
+  ws['!cols'] = [{wch:8},{wch:40},{wch:28},{wch:16},{wch:35},{wch:28},{wch:16},{wch:20},{wch:20},{wch:18},{wch:16},{wch:8}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Activos');
+  XLSX.writeFile(wb, 'Inventario_Activos_RJJ09_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel exportado', 'success');
+}
+
+function exportPDF(){
+  const title = 'Inventario de Activos Fijos — RJJ09\n' + new Date().toLocaleString('es-MX');
+  const grupos = exportOrdenado();
+  
+  const headers = ['N°','Descripción','Inventario','Resguardatario','Ubicación','Serie','Valor'];
+  const colW = [50, 250, 160, 180, 100, 70];
+  
+  // Simple print-based PDF
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Reporte Activos</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:10px;padding:20px}
+    h2{font-size:14px;margin-bottom:4px;color:#1a56db}
+    p{font-size:10px;color:#666;margin-bottom:10px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#1a56db;color:#fff;padding:5px 7px;text-align:left;font-size:9px}
+    td{padding:4px 7px;border-bottom:1px solid #eee;font-size:9px}
+    tr:nth-child(even){background:#f8fafc}
+    tr.grp td{background:#dbe7ff;color:#1a3a8a;font-weight:700;font-size:10px;border-top:2px solid #1a56db;padding:6px 7px}
+    tbody{page-break-inside:auto}
+    @media print{@page{margin:10mm}}
+  </style></head><body>
+  <h2>Inventario de Activos Fijos — RJJ09</h2>
+  <p>Generado: ${new Date().toLocaleString('es-MX')} | Total: ${filteredData.length} bienes | Ordenado por resguardante (A–Z)</p>
+  <table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+  ${grupos.map(p=>`<tbody><tr class="grp"><td colspan="7">${esc(p.nombre)} — ${p.items.length} bien(es) — Total $${Math.round(p.valor).toLocaleString('es-MX')}</td></tr>${p.items.map(a=>`<tr><td>${esc(a.numero)}</td><td>${esc(a.descripcion.substring(0,40))}</td><td>${esc(a.inventario.substring(0,24))}</td><td>${esc((a.nombreResguardatario||'').trim().substring(0,30))}</td><td>${esc((a.ubicacion||'').substring(0,28))}</td><td>${esc(a.serie)}</td><td>$${Math.round(a.valorAdquisicion||0).toLocaleString()}</td></tr>`).join('')}</tbody>`).join('')}
+  </table></body></html>`);
+  win.document.close();
+  setTimeout(()=>{ win.print(); }, 500);
+  showToast('Abriendo PDF para imprimir...', 'success');
+}
+
+// ==================== PRINT ALL QR ====================
+function printAllQR(){
+  const q = (document.getElementById('searchQR').value||'').toLowerCase();
+  const resguardFiltro = (document.getElementById('filterResguardQR').value||'').toLowerCase();
+  const data = ASSETS.filter(a=>{
+    const mq = !q || a.descripcion.toLowerCase().includes(q) || a.inventario.toLowerCase().includes(q);
+    const mr = !resguardFiltro || a.nombreResguardatario.toLowerCase().includes(resguardFiltro);
+    return mq && mr;
+  });
+
+  const container = document.getElementById('printQRGrid');
+  container.innerHTML = '';
+
+  const COLS = 3;
+  const ROWS_PER_PAGE = 4;
+  const ITEMS_PER_PAGE = COLS * ROWS_PER_PAGE;
+  const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+
+  for(let p = 0; p < totalPages; p++){
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'qr-print-page';
+    const pageItems = data.slice(p*ITEMS_PER_PAGE, (p+1)*ITEMS_PER_PAGE);
+
+    const table = document.createElement('table');
+    let row = null;
+
+    pageItems.forEach((a, i) => {
+      if(i % COLS === 0){
+        row = document.createElement('tr');
+        table.appendChild(row);
+      }
+      const td = document.createElement('td');
+      const qrWrap = document.createElement('div');
+      td.appendChild(qrWrap);
+      const desc = document.createElement('div');
+      desc.className = 'qr-desc-print';
+      desc.textContent = a.descripcion.substring(0,50);
+      td.appendChild(desc);
+      const inv = document.createElement('div');
+      inv.className = 'qr-inv-print';
+      inv.textContent = 'N° '+a.numero+' | '+a.inventario.substring(0,22);
+      td.appendChild(inv);
+      const resguardText = document.createElement('div');
+      resguardText.className = 'qr-resguard-print';
+      resguardText.textContent = a.nombreResguardatario.trim().substring(0,35);
+      td.appendChild(resguardText);
+      row.appendChild(td);
+
+      try {
+        new QRCode(qrWrap, {
+          text: window.location.origin + window.location.pathname + '?scan=' + encodeURIComponent(a.inventario),
+          width: 100, height: 100,
+          colorDark:'#000000', colorLight:'#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e){}
+    });
+
+    while(row && row.children.length < COLS){
+      row.appendChild(document.createElement('td'));
+    }
+
+    pageDiv.appendChild(table);
+    container.appendChild(pageDiv);
+  }
+
+  showToast(`Preparando ${data.length} QR para imprimir...`, 'success');
+  setTimeout(()=>{ window.print(); }, 1500);
+}
+
+// ==================== MODAL HELPERS ====================
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+});
+
+// ==================== TOAST ====================
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+
+// ==================== LEXI (asistente con IA) ====================
+const $l = id => document.getElementById(id);
+const nz = t => String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9ñ ]+/g,' ').replace(/\s+/g,' ').trim();
+const STOP_L = new Set('de la el los las un una unos unas del al en y o que cuantos cuantas cual cuales quien quienes tiene tienen hay son es esta estan para por con sin sobre muestrame dime dame lista todos todas bienes bien activo activos tenemos tengo favor porfa'.split(' '));
+
+function lexiToggle(force){
+  const w=$l('asistente'); const open = force!==undefined ? force : !w.classList.contains('open');
+  w.classList.toggle('open',open);
+  if(open) setTimeout(()=>$l('chatInput')&&$l('chatInput').focus(),200);
+}
+function lexiAddMsg(txt,user){
+  const d=document.createElement('div'); d.className='lw-msg '+(user?'lw-user':'lw-bot'); d.textContent=txt;
+  $l('chatBox').appendChild(d); const b=$l('lwBody'); b.scrollTop=b.scrollHeight; return d;
+}
+function lexiLimpiar(){
+  $l('chatBox').innerHTML='<div class="lw-msg lw-bot">Chat limpio. ¿En qué te ayudo?</div>';
+}
+function lexiEjemplo(btn){ $l('chatInput').value=btn.textContent; preguntarIA(); }
+
+// Burbuja arrastrable (un clic abre/cierra)
+(function(){
+  const b=$l('lexiBubble'); if(!b) return;
+  let down=false,moved=false,sx=0,sy=0,ox=0,oy=0;
+  b.addEventListener('pointerdown',e=>{down=true;moved=false;sx=e.clientX;sy=e.clientY;const r=b.getBoundingClientRect();ox=r.left;oy=r.top;b.setPointerCapture(e.pointerId);});
+  b.addEventListener('pointermove',e=>{ if(!down) return; const dx=e.clientX-sx,dy=e.clientY-sy; if(Math.abs(dx)+Math.abs(dy)>5) moved=true; if(!moved) return;
+    b.style.right='auto';b.style.bottom='auto';
+    b.style.left=Math.max(4,Math.min(innerWidth-60,ox+dx))+'px'; b.style.top=Math.max(4,Math.min(innerHeight-60,oy+dy))+'px'; });
+  b.addEventListener('pointerup',()=>{ if(down&&!moved) lexiToggle(); down=false; });
+})();
+
+// Voz
+let lexiVoz=false, lexiRec=null;
+const SRApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+function lexiToggleVoz(){ lexiVoz=!lexiVoz; $l('btnVoz').textContent=lexiVoz?'🔊':'🔇'; if(!lexiVoz&&window.speechSynthesis) speechSynthesis.cancel(); }
+function lexiHablar(t){ if(!lexiVoz||!window.speechSynthesis) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='es-MX'; const v=speechSynthesis.getVoices(); const ve=v.find(x=>x.lang==='es-MX')||v.find(x=>x.lang&&x.lang.startsWith('es')); if(ve)u.voice=ve; speechSynthesis.speak(u); }
+function lexiMic(){
+  if(!SRApi){ alert('Tu navegador no soporta reconocimiento de voz. Usa Google Chrome.'); return; }
+  if(lexiRec){ lexiRec.stop(); return; }
+  const btn=$l('btnMic'); lexiRec=new SRApi(); lexiRec.lang='es-MX'; lexiRec.interimResults=false;
+  btn.textContent='🔴';
+  lexiRec.onresult=e=>{ $l('chatInput').value=e.results[0][0].transcript; preguntarIA(); };
+  const fin=()=>{ btn.textContent='🎙️'; lexiRec=null; };
+  lexiRec.onerror=fin; lexiRec.onend=fin; lexiRec.start();
+}
+
+// ---- Contexto relevante (no se manda todo el inventario) ----
+function lexiLinea(a){
+  return `#${a.id} N°${a.numero} | ${a.descripcion} | ${a.marca||''} ${a.modelo||''} | serie:${a.serie||''} | inv:${a.inventario} | resg:${(a.nombreResguardatario||'').trim()} (${a.codResguardatario||''}) | emp:${a.empleadoResponsable||''} | $${a.valorAdquisicion||0}`;
+}
+function lexiContexto(pregunta){
+  const toks = nz(pregunta).split(' ').filter(t=>t.length>=3 && !STOP_L.has(t));
+  const nombres = {};
+  ASSETS.forEach(a=>{ const n=(a.nombreResguardatario||'').trim(); if(n) nombres[n]=(nombres[n]||0)+1; });
+  const listaNom = Object.entries(nombres).sort((x,y)=>x[0].localeCompare(y[0],'es')).map(([n,c])=>`${n} (${c})`).join('; ');
+  let match=[];
+  if(toks.length){
+    const sc = ASSETS.map(a=>{
+      const h = nz([a.descripcion,a.marca,a.modelo,a.serie,a.inventario,a.numero,a.nombreResguardatario,a.codResguardatario].join(' '));
+      const hw = h.split(' ');
+      let n=0; toks.forEach(t=>{ if(hw.some(w=>w===t||w.startsWith(t)||(t.length>=5&&t.startsWith(w)&&w.length>=4))) n++; });
+      return {a,n};
+    });
+    const max = Math.max(0,...sc.map(x=>x.n));
+    const min = Math.max(1, Math.ceil(toks.length/2));
+    if(max>=min) match = sc.filter(x=>x.n>=Math.min(max,Math.max(min,max))).map(x=>x.a);
+  }
+  const porPersona = {};
+  match.forEach(a=>{ const n=(a.nombreResguardatario||'').trim(); porPersona[n]=(porPersona[n]||0)+1; });
+  const resumenMatch = Object.entries(porPersona).sort((x,y)=>y[1]-x[1]).slice(0,20).map(([n,c])=>`${n}: ${c}`).join('; ');
+  const valorTotal = Math.round(ASSETS.reduce((s,a)=>s+(a.valorAdquisicion||0),0));
+  return `Total de bienes: ${ASSETS.length}. Valor total: $${valorTotal}.
+Resguardatarios (nombre exacto y cantidad de bienes): ${listaNom}
+${match.length?`Bienes que coinciden con la pregunta: ${match.length} en total${resumenMatch?` (por resguardatario → ${resumenMatch})`:''}. Detalle de los primeros ${Math.min(30,match.length)}:\n${match.slice(0,30).map(lexiLinea).join('\n')}`:'No hubo bienes que coincidan con palabras de la pregunta.'}`;
+}
+
+function lexiResolverPersona(nombre){
+  const n=nz(nombre); if(!n) return null;
+  const nombres=[...new Set(ASSETS.map(a=>(a.nombreResguardatario||'').trim()).filter(Boolean))];
+  return nombres.find(x=>nz(x)===n) || nombres.find(x=>nz(x).includes(n)||n.includes(nz(x))) || null;
+}
+function renderBajas(){
+  const q=(document.getElementById('searchBajas').value||'').toLowerCase();
+  const l=ASSETS.filter(a=>a.baja && (!q || (a.descripcion+' '+a.inventario+' '+(a.bajaDe||'')).toLowerCase().includes(q)));
+  const el=document.getElementById('bajasList');
+  if(!l.length){ el.innerHTML='<div style="padding:32px;text-align:center;color:var(--text-secondary)">Sin registros en el archivo de bajas.</div>'; return; }
+  el.innerHTML=l.map(a=>`<div class="group-card" style="padding:14px 18px">
+    <div style="font-weight:600;font-size:13.5px;color:var(--text-primary)">${esc(a.descripcion)}</div>
+    <div style="font-family:var(--font-mono);font-size:11.5px;color:var(--accent-cyan);margin-top:3px">${esc(a.inventario)}${a.valorAdquisicion?' · $'+Number(a.valorAdquisicion).toLocaleString('es-MX'):''}</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Resguardo previo: <strong style="color:var(--text-primary)">${esc(a.bajaDe||'(sin dato)')}</strong>${a.fechaBaja?' · '+esc(a.fechaBaja):''}</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="bajaReasignar(${a.id})">Reasignar Activo</button>
+      ${a.bajaDe?`<button class="btn btn-glass btn-sm" onclick="bajaReasignar(${a.id},'${String(a.bajaDe).replace(/'/g,"\'")}')">Restaurar a ${esc(a.bajaDe)}</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="bajaEliminar(${a.id})">Eliminar Definitivamente</button>
+    </div></div>`).join('');
+}
+function bajaReasignar(id,nombre){
+  if(!canEdit()){ alert('Sin permisos de edición'); return; }
+  const a=ASSETS.find(x=>x.id===id); if(!a) return;
+  if(!nombre){ nombre=prompt('¿A quién se lo asigno? (nombre completo del resguardante)'); if(!nombre||!nombre.trim()) return; }
+  const per=lexiResolverPersona(nombre); const nom=(per||nombre).trim().toUpperCase();
+  const ref=ASSETS.find(x=>!x.baja&&(x.nombreResguardatario||'').trim()===nom&&x.codResguardatario);
+  a.nombreResguardatario=nom; if(ref) a.codResguardatario=ref.codResguardatario;
+  delete a.baja; delete a.bajaDe; delete a.fechaBaja;
+  lexiRefrescar(); renderBajas(); showToast('Asignado a '+nom,'success');
+}
+function bajaEliminar(id){
+  if(!canEdit()){ alert('Sin permisos de edición'); return; }
+  const a=ASSETS.find(x=>x.id===id); if(!a) return;
+  if(!confirm(`¿Eliminar DEFINITIVAMENTE "${a.descripcion}" (${a.inventario})? No se puede deshacer y su QR dejará de funcionar.`)) return;
+  ASSETS=ASSETS.filter(x=>x.id!==id); lexiRefrescar(); renderBajas();
+}
+function lexiRefrescar(){
+  saveToStorage(); renderAfterLoad();
+}
+
+function lexiEjecutar(txt){
+  let t=String(txt||'').trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+  const i=t.indexOf('{'), j=t.lastIndexOf('}');
+  if(i!==0 || j<0) return null;           // no es acción: texto normal
+  let o; try{ o=JSON.parse(t.slice(i,j+1)); }catch(e){ return null; }
+  if(!o||!o.accion) return null;
+  const esAdm = canEdit();
+  const mut = ['editar_bien','reasignar','agregar_bien','eliminar_bien'];
+  if(mut.includes(o.accion) && !esAdm) return 'No tienes permisos para modificar bienes.';
+  if(o.accion==='eliminar_bien' && currentRole!=='admin') return 'Solo el administrador puede eliminar bienes.';
+  const campos={descripcion:'descripcion',marca:'marca',modelo:'modelo',serie:'serie',inventario:'inventario',numero:'numero',nombreResguardatario:'nombreResguardatario',codResguardatario:'codResguardatario',empleadoResponsable:'empleadoResponsable',valorAdquisicion:'valorAdquisicion'};
+
+  switch(o.accion){
+    case 'filtrar':{
+      showTab('inventario');
+      $l('searchInput').value = o.texto||'';
+      const per = o.resguardatario ? lexiResolverPersona(o.resguardatario) : null;
+      const sel=$l('filterResguard'); sel.value = per && [...sel.options].some(x=>x.value===per) ? per : '';
+      applyFilters();
+      return `Listo, filtré la tabla: ${filteredData.length} bien(es)${per?' de '+per:''}${o.texto?' con "'+o.texto+'"':''}.`;
+    }
+    case 'ver_ficha':{
+      const a=ASSETS.find(x=>x.id===Number(o.id)); if(!a) return 'No encontré ese bien.';
+      showDetail(a.id); return `Abrí la ficha de ${a.descripcion} (N° ${a.numero}).`;
+    }
+    case 'ver_qr':{
+      showTab('qr-codes');
+      $l('searchQR').value=o.texto||'';
+      const per=o.resguardatario?lexiResolverPersona(o.resguardatario):null;
+      const sel=$l('filterResguardQR'); sel.value = per && [...sel.options].some(x=>x.value===per) ? per : '';
+      renderQRGrid(); return 'Te muestro los códigos QR'+(per?' de '+per:'')+'. Usa "Imprimir todos los QR" si quieres sacarlos.';
+    }
+    case 'exportar_excel':{
+      exportExcel(); return 'Descargando el Excel con lo que se ve en la tabla.';
+    }
+    case 'editar_bien':{
+      const a=ASSETS.find(x=>x.id===Number(o.id)); if(!a) return 'No encontré ese bien.';
+      const c=o.cambios||{}; const hechos=[];
+      Object.keys(c).forEach(k=>{
+        if(!campos[k]) return;
+        let v=c[k]; if(k==='valorAdquisicion') v=Number(v)||0; else v=String(v).trim();
+        if(k==='nombreResguardatario'){ const per=lexiResolverPersona(v); if(per){ v=per; const ref=ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario); if(ref&&c.codResguardatario===undefined) a.codResguardatario=ref.codResguardatario; } }
+        a[k]=v; hechos.push(k);
+      });
+      if(!hechos.length) return 'No identifiqué qué campo cambiar.';
+      lexiRefrescar(); return `Listo, actualicé ${a.descripcion} (N° ${a.numero}): ${hechos.join(', ')}.`;
+    }
+    case 'reasignar':{
+      const per=lexiResolverPersona(o.resguardatario||o.hasta);
+      if(!per) return 'No encontré a esa persona entre los resguardatarios. Dime el nombre completo y su código para registrarla.';
+      let lista=[];
+      if(Array.isArray(o.ids)) lista=ASSETS.filter(a=>o.ids.map(Number).includes(a.id));
+      if(o.desde){ const d=lexiResolverPersona(o.desde); if(!d) return 'No encontré a la persona de origen.'; lista=lista.concat(ASSETS.filter(a=>(a.nombreResguardatario||'').trim()===d)); }
+      lista=[...new Set(lista)];
+      if(!lista.length) return 'No encontré bienes para reasignar.';
+      if(!confirm(`¿Reasignar ${lista.length} bien(es) a ${per}?`)) return 'Cancelado, no cambié nada.';
+      const ref=ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario);
+      lista.forEach(a=>{ a.nombreResguardatario=per; if(ref) a.codResguardatario=ref.codResguardatario; });
+      lexiRefrescar(); return `Listo, reasigné ${lista.length} bien(es) a ${per}.`;
+    }
+    case 'agregar_bien':{
+      const inv=String(o.inventario||'').trim(), des=String(o.descripcion||'').trim();
+      if(!inv||!des) return 'Para agregar un bien necesito al menos el número de inventario y la descripción.';
+      if(ASSETS.some(a=>a.inventario===inv)) return `Ya existe un bien con el inventario ${inv}.`;
+      const per=o.resguardatario?(lexiResolverPersona(o.resguardatario)||String(o.resguardatario).trim()):'';
+      const ref=per?ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario):null;
+      const id=Math.max(0,...ASSETS.map(a=>a.id))+1;
+      ASSETS.push({id,inventario:inv,numero:String(o.numero||'').trim(),descripcion:des,codResguardatario:ref?ref.codResguardatario:String(o.codResguardatario||''),nombreResguardatario:per,marca:String(o.marca||'SM').trim()||'SM',modelo:String(o.modelo||'SM').trim()||'SM',serie:String(o.serie||'SN').trim()||'SN',empleadoResponsable:String(o.empleadoResponsable||''),valorAdquisicion:Number(o.valor||o.valorAdquisicion)||0,almacen:'400'});
+      lexiRefrescar(); return `Listo, agregué "${des}" (${inv})${per?' a nombre de '+per:''}.`;
+    }
+    case 'eliminar_bien':{
+      const a=ASSETS.find(x=>x.id===Number(o.id)); if(!a) return 'No encontré ese bien.';
+      if(!confirm(`¿Eliminar "${a.descripcion}" (N° ${a.numero}, ${a.inventario})? No se puede deshacer.`)) return 'Cancelado, no eliminé nada.';
+      ASSETS=ASSETS.filter(x=>x.id!==a.id); lexiRefrescar(); return `Listo, eliminé "${a.descripcion}" (N° ${a.numero}).`;
+    }
+  }
+  return null;
+}
+
+
+// ---- Adjuntar PDF / imagen: comparar contra el inventario ----
+let lexiArchivo=null, lexiPlan=null;
+function lexiElegirArchivo(inp){
+  const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
+  if(f.size>15*1024*1024){ lexiAddMsg('El archivo pesa más de 15 MB. Mándalo más ligero o por partes.',false); return; }
+  if(!(f.type==='application/pdf'||f.type.startsWith('image/'))||/heic|heif/i.test(f.type)){ lexiAddMsg('Solo puedo leer PDF o imágenes (JPG/PNG).',false); return; }
+  lexiArchivo=f; $l('lwFile').style.display='flex'; $l('lwFileName').textContent='📎 '+f.name+' — escribe qué hago (ej. "agrega los que falten a Juan David")';
+  $l('chatInput').focus();
+}
+function lexiQuitarArchivo(){ lexiArchivo=null; $l('lwFile').style.display='none'; }
+function lexiB64(f){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.onerror=rej; fr.readAsDataURL(f); }); }
+const nkL = x => String(x||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const nkInv = x => nkL(x).replace(/^RJJ09[I1L]/,'RJJ091');
+
+function lexiComparar(doc, destino, difuso){
+  const porInv=new Map(), porSerie=new Map(), porNum=new Map();
+  ASSETS.forEach(a=>{ porInv.set(nkInv(a.inventario),a); if(a.serie&&a.serie!=='SN'&&nkL(a.serie).length>=4) porSerie.set(nkL(a.serie),a); if(a.numero) porNum.set(nkL(a.numero),a); });
+  const igual=[], otra=[], nuevos=[], sinInv=[];
+  (doc.bienes||[]).forEach(b=>{
+    if(b.inventario && !/^RJJ09/i.test(String(b.inventario).replace(/[^A-Za-z0-9]/g,''))){ b.inventario=''; }
+    let a = (b.inventario&&porInv.get(nkInv(b.inventario))) || (b.serie&&nkL(b.serie).length>=4&&porSerie.get(nkL(b.serie))) || (!b.inventario&&b.numero&&porNum.get(nkL(b.numero)));
+    if(!a && b.inventario){
+      const k=nkInv(b.inventario);
+      const t7=k.slice(-7);
+      let cand=ASSETS.filter(x=>nkInv(x.inventario).slice(-7)===t7 && /^\d{7}$/.test(t7));
+      if(cand.length!==1){ cand=ASSETS.filter(x=>{ const y=nkInv(x.inventario); if(y.length!==k.length) return false; let d=0; for(let i=0;i<k.length&&d<2;i++) if(k[i]!==y[i]) d++; return d===1; }); }
+      if(cand.length===1){ a=cand[0]; b._dudoso=true; }
+    }
+    if(a){ if(destino && (a.nombreResguardatario||'').trim()!==destino) otra.push({a,b}); else igual.push({a,b}); }
+    else if(b.inventario) nuevos.push(b); else sinInv.push(b);
+  });
+  const enDoc=new Set([...igual,...otra].map(x=>x.a.id));
+  const sobran = destino ? ASSETS.filter(a=>(a.nombreResguardatario||'').trim()===destino && !enDoc.has(a.id)) : [];
+  return {igual,otra,nuevos,sinInv,sobran};
+}
+function lexiLista(ul,items,f){ items.slice(0,15).forEach(x=>{ const li=document.createElement('li'); li.textContent=f(x); ul.appendChild(li); }); if(items.length>15){ const li=document.createElement('li'); li.textContent='… y '+(items.length-15)+' más'; ul.appendChild(li); } }
+
+// ---- Lectura LOCAL (sin Google) de PDF escaneado / foto: OCR en tu equipo ----
+function lexiCargaScript(src){ return new Promise((res,rej)=>{ if(document.querySelector('script[data-lx="'+src+'"]')) return res(); const s=document.createElement('script'); s.src=src; s.dataset.lx=src; s.onload=res; s.onerror=()=>rej(new Error('No pude cargar '+src)); document.head.appendChild(s); }); }
+async function lexiImagenesDeArchivo(f, prog){
+  if(f.type.startsWith('image/')){
+    const url=URL.createObjectURL(f); const img=await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+    const k=Math.min(1, 3000/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=img.width*k; c.height=img.height*k; c.getContext('2d').drawImage(img,0,0,c.width,c.height); return [c];
+  }
+  await lexiCargaScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise; const out=[];
+  for(let i=1;i<=pdf.numPages;i++){ prog('Preparando página '+i+' de '+pdf.numPages+'...'); const pg=await pdf.getPage(i); const v0=pg.getViewport({scale:1}); const sc=Math.min(4, 3000/Math.max(v0.width,v0.height)); const v=pg.getViewport({scale:sc}); const c=document.createElement('canvas'); c.width=v.width; c.height=v.height; await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise; out.push(c); }
+  return out;
+}
+function lexiInvDeToken(raw){
+  const t=String(raw).toUpperCase().replace(/[^A-Z0-9!|]/g,'');
+  const m=t.match(/^RJJ[0OD][9D](.*)$/); if(!m) return null;
+  let rest=m[1].replace(/[!|LI]/g,'1').replace(/O/g,'0').replace(/[SB]/g,x=>x==='S'?'5':'8').replace(/[^0-9]/g,'');
+  if(rest.length===17 && rest[0]==='1') rest=rest.slice(1);
+  if(rest.length!==16) return null;
+  return 'RJJ09I'+rest;
+}
+async function lexiOcrLocal(f, prog){
+  await lexiCargaScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+  const paginas=await lexiImagenesDeArchivo(f, prog);
+  const worker=await Tesseract.createWorker('eng',1,{logger:m=>{ if(m.status==='recognizing text') prog('Leyendo con OCR... '+Math.round(m.progress*100)+'%'); }});
+  const PASES=['6','12','11'];
+  const bienes=[]; let persona='';
+  for(let i=0;i<paginas.length;i++){
+    const grupos=new Map(); const W=paginas[i].width;
+    for(let p=0;p<PASES.length;p++){
+      prog('Leyendo página '+(i+1)+' de '+paginas.length+' (pasada '+(p+1)+' de '+PASES.length+')...');
+      await worker.setParameters({tessedit_pageseg_mode:PASES[p]});
+      const {data}=await worker.recognize(paginas[i]);
+      const words=(data.words||[]).map(w=>({t:w.text,x0:w.bbox.x0,x1:w.bbox.x1,y0:w.bbox.y0,y1:w.bbox.y1}));
+      if(!persona){ const k=words.findIndex(w=>/^USUARIO:?$/i.test(w.t)); if(k>=0){ const y=words[k].y0; const n=words.filter(w=>w.x0>words[k].x1 && Math.abs(w.y0-y)<25).sort((a,b)=>a.x0-b.x0).map(w=>w.t).join(' ').replace(/[^A-ZÁÉÍÓÚÑa-z\s]/g,'').trim(); if(n.length>5) persona=n; } }
+      const afs=words.map(w=>({w,inv:lexiInvDeToken(w.t)})).filter(x=>x.inv).sort((a,b)=>a.w.y0-b.w.y0);
+      afs.forEach((x,k)=>{
+        const w=x.w, yTop=w.y0-6, yBot=(afs[k+1]?afs[k+1].w.y0-6: w.y0+W*0.09);
+        const desc=words.filter(o=>o!==w && o.x0>w.x1-4 && o.x1<w.x1+W*0.21 && o.y0>=yTop && o.y0<yBot && !/RJJ|^\$|^[\d.,]+$/.test(o.t)).sort((a,b)=>Math.round(a.y0/14)-Math.round(b.y0/14)||a.x0-b.x0).map(o=>o.t).join(' ').replace(/\s+/g,' ').trim();
+        const tail=x.inv.slice(-7); const g=grupos.get(tail)||{votos:{},desc:''};
+        g.votos[x.inv]=(g.votos[x.inv]||0)+1; if(!g.desc && desc.length>4) g.desc=desc; grupos.set(tail,g);
+      });
+    }
+    grupos.forEach(g=>{ const inv=Object.entries(g.votos).sort((a,b)=>b[1]-a[1])[0][0]; bienes.push({inventario:inv, numero:'', descripcion:g.desc, marca:'', modelo:'', serie:'', _ocr:true}); });
+  }
+  await worker.terminate();
+  bienes.sort((a,b)=>a.inventario.slice(-7).localeCompare(b.inventario.slice(-7)));
+  return {persona, bienes};
+}
+
+async function lexiProcesarArchivo(pregunta){
+  const f=lexiArchivo; lexiQuitarArchivo(); window.lexiArchivoUlt={f,pregunta};
+  lexiAddMsg('📎 '+f.name+(pregunta?'\n'+pregunta:''),true);
+  const pens=lexiAddMsg('Leyendo el documento...',false);
+  try{
+    let n=0; while(typeof window.extraerConIA!=='function' && !window.lexiInitError && n<24){ await new Promise(r=>setTimeout(r,250)); n++; }
+    if(typeof window.extraerConIA!=='function') throw new Error('El asistente todavía no termina de cargar.');
+    const nombres=[...new Set(ASSETS.map(a=>(a.nombreResguardatario||'').trim()).filter(Boolean))].join('; ');
+    const prompt=`Lee el documento adjunto (lista de bienes / resguardo de activos). Extrae TODOS los bienes que aparecen, sin omitir ninguno. Responde SOLO con JSON: {"persona":"","bienes":[{"inventario":"","numero":"","descripcion":"","marca":"","modelo":"","serie":"","anterior":"","valor":0}]}.
+- "inventario" es SIEMPRE el valor de la columna "N° A/F" (empieza con RJJ09, ej. RJJ09I4504000081300102, 22 caracteres). NUNCA uses la columna "NO. INVENTARIO ANTERIOR" (la que empieza con I45... y contiene "RJJ" a la mitad, o dice SN): esa va en "anterior". Cada fila trae su N° A/F; si de verdad no se lee, déjalo "".
+- "anterior" es el valor de la columna "NO. INVENTARIO ANTERIOR" (puede ser "SN" o vacío).
+- "numero" es el consecutivo de la columna "N°" (1, 2, 3...). Si el documento tiene varias páginas, cuenta todas.
+- "persona": a quién deben asignarse los bienes. Si el usuario lo indica en su instrucción, usa esa persona; si no, usa el resguardatario que aparece en el documento; si no hay, "".
+- Nombres existentes en el sistema (usa el nombre exacto de esta lista si coincide): ${nombres}
+Instrucción del usuario: ${pregunta||'(ninguna)'}`;
+    let doc, local=false;
+    try{
+      const raw=await window.extraerConIA(prompt,f.type||'application/pdf',await lexiB64(f));
+      try{ doc=JSON.parse(String(raw).replace(/^```(?:json)?/i,'').replace(/```$/,'').trim()); }catch(e){ throw new Error('respuesta no válida'); }
+      const malos=d=>((d&&d.bienes)||[]).filter(b=>!/^RJJ09/i.test(String(b.inventario||'').replace(/[^A-Za-z0-9]/g,''))).length;
+      if(doc&&Array.isArray(doc.bienes)&&doc.bienes.length&&malos(doc)>doc.bienes.length*0.2){
+        pens.textContent='La lectura salió con la columna equivocada, reintentando...';
+        const raw2=await window.extraerConIA(prompt+'\n\nATENCIÓN: en tu intento anterior pusiste en "inventario" la columna equivocada. Cada fila tiene DOS códigos largos: el de la columna "N° A/F" (empieza con RJJ09, ejemplo RJJ09I4504000081300102) y el de "NO. INVENTARIO ANTERIOR" (ejemplo I450400008RJJ199603821). En "inventario" va SOLO el que empieza con RJJ09.',f.type||'application/pdf',await lexiB64(f));
+        try{ const d2=JSON.parse(String(raw2).replace(/^```(?:json)?/i,'').replace(/```$/,'').trim()); if(d2&&Array.isArray(d2.bienes)&&malos(d2)<malos(doc)) doc=d2; }catch(e){}
+      }
+    }catch(eIA){
+      console.warn('IA no disponible, leo en local', eIA);
+      pens.textContent='Google está saturado, lo leo aquí mismo sin Google (puede tardar un poco)...';
+      doc=await lexiOcrLocal(f, t=>{ pens.textContent='Sin Google · '+t; }); local=true;
+      if(pregunta){ const mm=pregunta.match(/(?:a nombre de|para|a)\s+([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{4,})$/i); if(mm) doc.persona=mm[1].trim(); }
+    }
+    if(!doc||!Array.isArray(doc.bienes)||!doc.bienes.length){ pens.textContent='No encontré bienes en el documento. ¿Es la hoja correcta?'; return; }
+    const per=lexiResolverPersona(doc.persona); const nombreDestino=per||String(doc.persona||'').trim().toUpperCase(); const destino=nombreDestino;
+    const c=lexiComparar(doc,destino,local);
+    if(local){ c.dudosos=c.nuevos; c.nuevos=[]; }
+    const nz=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+    c.cambios=[];
+    if(!local) [...c.igual,...c.otra].forEach(({a,b})=>{
+      if(b._dudoso) return; const cam={};
+      ['descripcion','marca','modelo','serie'].forEach(k=>{ const v=String(b[k]||'').trim(); if(v && nz(v)!==nz(a[k])) cam[k]=v; });
+      const val=Number(b.valor)||0; if(val>0 && Math.abs(val-(Number(a.valorAdquisicion)||0))>0.005) cam.valorAdquisicion=val;
+      if(Object.keys(cam).length) c.cambios.push({a,cam});
+    });
+    lexiPlan={destino:nombreDestino,existe:!!per,otra:c.otra,nuevos:c.nuevos,cambios:c.cambios,sobran:[]};
+    pens.textContent='';
+    const box=document.createElement('div'); box.className='lw-plan';
+    const t=document.createElement('div'); t.innerHTML='<b>Comparé el documento con el sistema</b> <small style="opacity:.5">(v18)</small>'; box.appendChild(t);
+    const resumen=document.createElement('div'); resumen.style.marginTop='4px';
+    resumen.textContent=`El documento trae ${doc.bienes.length} bien(es)`+(nombreDestino?` · persona: ${nombreDestino}${per?'':' (no está registrada, se crearía nueva)'}`:' · sin persona indicada');
+    box.appendChild(resumen);
+    if(local){ const rb=document.createElement('button'); rb.className='ok'; rb.style.cssText='margin:8px 0 2px;display:block'; rb.textContent='🔄 Reintentar con Google (lee las 34 filas completas)'; rb.onclick=()=>{ const u=window.lexiArchivoUlt; if(u){ lexiArchivo=u.f; lexiProcesarArchivo(u.pregunta); } }; box.appendChild(rb); }
+    if(local){ const av=document.createElement('div'); av.style.cssText='margin-top:6px;font-size:12px;color:#b45309'; av.textContent='ℹ️ Leído en tu equipo sin Google (OCR). Encontré '+doc.bienes.length+' números de inventario; en una hoja escaneada puede faltar o leerse mal alguno. Solo reasigno los que ya existen en el sistema; para dar de alta bienes nuevos reintenta cuando Google responda.'; box.appendChild(av); }
+    const sec=(titulo,items,fx)=>{ if(!items.length) return; const h=document.createElement('h4'); h.textContent=titulo+' ('+items.length+')'; box.appendChild(h); const ul=document.createElement('ul'); lexiLista(ul,items,fx); box.appendChild(ul); };
+    sec('✅ Ya están con la persona correcta',c.igual,x=>`${x.a.descripcion} — ${x.a.inventario}${x.b._dudoso?' (el documento dice '+nkInv(x.b.inventario)+', pero coincide con este: revísalo)':''}`);
+    sec('🔁 Están en el sistema con OTRA persona',c.otra,x=>`${x.a.descripcion} — ${x.a.inventario} (${x.a.baja?'estaba en Bajas'+(x.a.bajaDe?', antes con '+x.a.bajaDe:''):'ahora: '+(x.a.nombreResguardatario||'').trim()})`);
+    sec('➕ NO están en el sistema',c.nuevos,b=>`${b.descripcion||''} — ${b.inventario}`);
+    sec('⚠️ No coinciden con ningún bien del sistema (pueden ser nuevos o lecturas dudosas del OCR)',c.dudosos||[],b=>`${b.inventario}${b.descripcion?' — '+b.descripcion:''}`);
+    sec('⚠️ Sin número de inventario (revisar a mano)',c.sinInv,b=>`${b.descripcion||''} ${b.serie?'serie '+b.serie:''}`);
+    const secCb=(titulo,lista,textoFx,marcado,destinoArr)=>{ if(!lista.length) return; const h=document.createElement('h4'); h.textContent=titulo+' ('+lista.length+')'; box.appendChild(h);
+      const cont=document.createElement('div'); cont.style.cssText='max-height:220px;overflow:auto;font-size:12px'; lista.forEach(it=>{ const lb=document.createElement('label'); lb.style.cssText='display:flex;gap:6px;align-items:flex-start;margin:3px 0;cursor:pointer'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=marcado; cb.style.marginTop='2px'; it.cb=cb; const sp=document.createElement('span'); sp.textContent=textoFx(it); lb.appendChild(cb); lb.appendChild(sp); cont.appendChild(lb); destinoArr.push(it); }); box.appendChild(cont); };
+    const campoN={descripcion:'descripción',marca:'marca',modelo:'modelo',serie:'serie',valorAdquisicion:'valor'};
+    secCb('✏️ Datos que se corregirán para que queden igual al documento (desmarca los que no)',c.cambios,x=>`${x.a.inventario}: `+Object.keys(x.cam).map(k=>`${campoN[k]} "${x.a[k]==null||x.a[k]===''?'(vacío)':x.a[k]}" → "${x.cam[k]}"`).join('; '),true,[]);
+    c.sobranObj=c.sobran.map(a=>({a}));
+    secCb('❓ Están con la persona en el sistema pero NO en el documento (marca los que quieras mandar a BAJAS)',c.sobranObj,x=>`${x.a.descripcion} — ${x.a.inventario}`,false,lexiPlan.sobran);
+    const acc=(c.otra.length+c.nuevos.length+c.cambios.length+c.sobran.length);
+    if(acc && nombreDestino && canEdit()){
+      const act=document.createElement('div'); act.className='lw-act';
+      const ok=document.createElement('button'); ok.className='ok'; ok.textContent=`Aplicar: reasignar ${c.otra.length}, agregar ${c.nuevos.length} y corregir datos`; ok.onclick=()=>lexiAplicarPlan(box);
+      const no=document.createElement('button'); no.textContent='Cancelar'; no.onclick=()=>{ lexiPlan=null; act.remove(); const m=document.createElement('div'); m.style.marginTop='8px'; m.textContent='Cancelado, no cambié nada.'; box.appendChild(m); };
+      act.appendChild(ok); act.appendChild(no); box.appendChild(act);
+    } else if(acc && !nombreDestino){
+      const m=document.createElement('div'); m.style.marginTop='8px'; m.textContent='Dime a qué persona asignarlos (adjunta otra vez con una instrucción como "ponlos a nombre de Juan David").'; box.appendChild(m);
+    } else if(!acc){ const m=document.createElement('div'); m.style.marginTop='8px'; m.textContent='No hay nada que cambiar. Todo coincide.'; box.appendChild(m); }
+    pens.replaceWith(box); const b=$l('lwBody'); b.scrollTop=b.scrollHeight;
+  }catch(e){ pens.textContent='No pude procesar el archivo. Detalle: '+(e&&e.message||e); console.error(e); }
+}
+function lexiAplicarPlan(box){
+  const pl=lexiPlan; if(!pl) return; if(!canEdit()){ alert('Sin permisos de edición'); return; }
+  const nCam=pl.cambios.filter(x=>x.cb&&x.cb.checked).length, nSob=pl.sobran.filter(x=>x.cb.checked).length;
+  if(!confirm(`¿Aplicar cambios a nombre de ${pl.destino}?\n• Reasignar ${pl.otra.length}\n• Agregar ${pl.nuevos.length}\n• Corregir datos de ${nCam} bien(es)\n• Mandar a Bajas ${nSob}`)) return;
+  const per=lexiResolverPersona(pl.destino); const nombre=per||pl.destino.toUpperCase();
+  const ref=per?ASSETS.find(x=>(x.nombreResguardatario||'').trim()===per&&x.codResguardatario):null;
+  pl.otra.forEach(({a})=>{ a.nombreResguardatario=nombre; if(ref) a.codResguardatario=ref.codResguardatario; delete a.baja; delete a.bajaDe; delete a.fechaBaja; });
+  pl.cambios.forEach(x=>{ if(x.cb&&x.cb.checked) Object.assign(x.a,x.cam); });
+  pl.sobran.forEach(x=>{ if(x.cb.checked){ x.a.baja=true; x.a.bajaDe=(x.a.nombreResguardatario||'').trim(); x.a.fechaBaja=new Date().toLocaleDateString('es-MX'); x.a.nombreResguardatario=''; x.a.codResguardatario=''; } });
+  let id=Math.max(0,...ASSETS.map(a=>a.id));
+  pl.nuevos.forEach(b=>{ id++; ASSETS.push({id,inventario:String(b.inventario).trim(),numero:String(b.numero||'').trim(),descripcion:String(b.descripcion||'SIN DESCRIPCIÓN').trim(),codResguardatario:ref?ref.codResguardatario:'',nombreResguardatario:nombre,marca:String(b.marca||'SM').trim()||'SM',modelo:String(b.modelo||'SM').trim()||'SM',serie:String(b.serie||'SN').trim()||'SN',empleadoResponsable:'',valorAdquisicion:Number(b.valor)||0,almacen:'400'}); });
+  lexiRefrescar(); lexiPlan=null;
+  const act=box.querySelector('.lw-act'); if(act) act.remove();
+  const m=document.createElement('div'); m.style.cssText='margin-top:8px;font-weight:700;color:#15803d'; m.textContent=`✔ Listo: reasigné ${pl.otra.length}, agregué ${pl.nuevos.length}, corregí datos de ${nCam} y mandé a Bajas ${nSob}. Todo a nombre de ${nombre}.`+(per?'':' (Persona nueva: sin código de resguardatario, edítalo si lo necesitas.)'); box.appendChild(m);
+}
+
+async function preguntarIA(){
+  const inp=$l('chatInput'); const pregunta=inp.value.trim();
+  if(lexiArchivo){ inp.value=''; const ch0=$l('lwChips'); if(ch0) ch0.remove(); return lexiProcesarArchivo(pregunta); }
+  if(!pregunta) return;
+  if(lexiVoz&&window.speechSynthesis){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u); }
+  const ch=$l('lwChips'); if(ch) ch.remove();
+  if(pregunta==='/diag'){
+    inp.value=''; lexiAddMsg('/diag',true);
+    const m=lexiAddMsg('Midiendo tiempos... (unos 30 segundos)',false); const lineas=[];
+    try{ let n=0; while(typeof window.lexiDiagnostico!=='function' && n<20){ await new Promise(r=>setTimeout(r,250)); n++; }
+      await window.lexiDiagnostico(l=>{ lineas.push(l); m.textContent='Diagnóstico:\n'+lineas.join('\n'); }); m.textContent='Diagnóstico:\n'+lineas.join('\n')+'\nListo. Mándame este resultado.';
+    }catch(e){ m.textContent='Diagnóstico falló: '+(e&&e.message||e); }
+    return;
+  }
+  lexiAddMsg(pregunta,true); inp.value='';
+  const pens=lexiAddMsg('Pensando...',false);
+  const t0=performance.now(); let tPrimera=null;
+  const prompt=`Eres LEXI, asistente del Sistema de Control de Activos RJJ09 de la CGACCE (INECC). Responde siempre en español, directo al grano, sin saludar ni presentarte. Usa solo los datos que se te dan; si no están, dilo.
+
+${lexiContexto(pregunta)}
+
+Si el usuario pide una ACCIÓN, responde ÚNICAMENTE con un JSON (sin texto extra ni comillas de código) con una de estas formas:
+{"accion":"filtrar","texto":"","resguardatario":""}  (mostrar/filtrar la tabla; resguardatario = nombre exacto de la lista)
+{"accion":"ver_ficha","id":N}
+{"accion":"ver_qr","texto":"","resguardatario":""}
+{"accion":"exportar_excel"}  (descarga lo que muestra la tabla; antes filtra si hace falta)
+{"accion":"editar_bien","id":N,"cambios":{"descripcion":"","marca":"","modelo":"","serie":"","inventario":"","numero":"","nombreResguardatario":"","codResguardatario":"","empleadoResponsable":"","valorAdquisicion":N}}
+{"accion":"reasignar","ids":[N,...],"desde":"nombre exacto (opcional: pasa TODOS sus bienes)","resguardatario":"nombre exacto de quien los recibe"}
+{"accion":"agregar_bien","inventario":"","numero":"","descripcion":"","marca":"","modelo":"","serie":"","resguardatario":"","valor":N}
+{"accion":"eliminar_bien","id":N}
+En "cambios" pon solo los campos que cambian. Identifica el bien por el id de la lista aunque el nombre esté incompleto o mal escrito. Si hay ambigüedad o no hay coincidencia, no generes JSON: pide aclaración en texto normal.
+Si NO es una acción (pregunta, conteo, consulta, charla), responde en texto plano. Para conteos usa los totales que se te dan.
+
+Usuario: ${pregunta}`;
+  try{
+    let n=0; while(typeof window.preguntarGemini!=='function' && !window.lexiInitError && n<24){ await new Promise(r=>setTimeout(r,250)); n++; }
+    if(typeof window.preguntarGemini!=='function') throw new Error(window.lexiInitError?('No se pudo iniciar: '+(window.lexiInitError.message||window.lexiInitError)):'El asistente todavía no termina de cargar. Espera unos segundos y vuelve a intentar.');
+    const cruda=await window.preguntarGemini(prompt, parcial=>{
+      if(tPrimera===null) tPrimera=performance.now()-t0;
+      const t=parcial.trimStart();
+      if(t && t[0]!=='{' && !t.startsWith('```')){ pens.textContent=parcial; const b=$l('lwBody'); b.scrollTop=b.scrollHeight; }
+    });
+    const acc=lexiEjecutar(cruda);
+    const fin=acc!=null?acc:cruda;
+    pens.textContent=fin; lexiHablar(fin);
+    const tot=((performance.now()-t0)/1000).toFixed(1), pri=tPrimera!=null?(tPrimera/1000).toFixed(1):tot;
+    const inf=document.createElement('div'); inf.style.cssText='font-size:10px;color:#9aa5a0;margin-top:5px'; inf.textContent=`⏱ primera respuesta ${pri}s · total ${tot}s · modo ${window.lexiModo||'?'}`; pens.appendChild(inf);
+  }catch(e){
+    pens.textContent='No pude conectar con el asistente. Detalle: '+(e&&e.message||e);
+    console.error(e);
+  }
+}
+
+// ==================== START ====================
+// El arranque lo dispara auth.onAuthStateChanged: si hay sesión de admin,
+// carga datos y muestra la app; si no, muestra el login.
+</script>
+</body>
+</html>
